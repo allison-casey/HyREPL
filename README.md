@@ -8,15 +8,15 @@ The current debug enviorment relies on sockets:
 2. Connect with netcat too port `13337`.  
 3. Run `client.py` and `main.py` (main.py is the server while client just sends basic commands)   
 4. Watch the magic in the netcat session  
-
-TODO:
-1. Fork it (yes, you!)
-2. Add lisence
-3. Get code running
-4. Fill in blank stuff
-5. ???
-6. Tests
-
+  
+TODO:  
+1. Fork it (yes, you!)  
+2. Add lisence    
+3. Get code running  
+4. Fill in blank stuff  
+5. ???  
+6. Tests    
+  
 Current structure is a simple multi-threaded TCP server using socketserver's example code on exactly that (copypastaaaaaa), sessions will be kept in classes and each session (a session is just a random generated UUID) will have a repl class to keep the code in place.
 
 Sources:  
