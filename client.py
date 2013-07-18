@@ -20,4 +20,4 @@ def client(ip, port, message):
 
 client(ip, port, {"op": "eval", "code": "(time (reduce + (range 1e6)))"})
 client(ip, port, {"op": "eval", "code": "(time (reduce + (range 1e6)))"})
-client(ip, port, {"op": "eval", "code": "(time (reduce + (range 1e6)))"})
+client(ip, port, {"op": "ls-sessions"})

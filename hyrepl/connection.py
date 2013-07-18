@@ -8,28 +8,46 @@ from debug.debugger import debug
 from nrepl.bencode import encode, decode 
 
 
+operations = {}
+
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
-    connections = []
-    operations = {}
+    """The actuall thread we launch on ever request"""
+
+    sessions = {}
 
     def handle(self):
-        self.l.append(uuid.uuid4())
-        data = str(self.request.recv(1024), 'utf-8')
+        in_data = str(self.request.recv(1024), 'utf-8')
+
         #cur_thread = threading.current_thread()
+        decoded_data = [i for i in decode(in_data)][0]
         
-        ret = [i for i in decode(data)][0]
-        
-        debug("Thread: {} Data: {}".format(cur_thread, self.l))
-        
-        res = encode(ret)
-        
-        self.request.sendall(bytes(res, 'utf-8'))
+        if "session" not in decoded_data:
+            sess = str(uuid.uuid4()) 
+            self.sessions[sess] = Session(sess)
+        else:
+            sess = decoded_data["session"]
 
 
-    def operation(self, operation):
+        if decoded_data["op"] in list(operations.keys()):
+            returned_value = operations[decoded_data["op"]](self, self.sessions[sess])
+
+
+        if returned_value != None:
+            returned_dict = {"session": sess}
+            returned_dict.update(returned_value)
+            debug(returned_dict)
+            encoded_data = encode(returned_dict)
+            
+            #debug(encoded_data)
+
+            self.request.sendall(bytes(encoded_data, 'utf-8'))
+
+
+
+    def operation(operation_val):
         def _(fn):
-            self.operations[operation] = fn
+            operations[operation_val] = fn
         return _
 
 
@@ -64,7 +82,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
     @operation("ls-sessions")
     def ls_sessions_opeartion(self, session):
-        pass
+        return {"sessions": list(self.sessions.keys())}
 
 
     @operation("stdin")
@@ -76,22 +94,27 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """Threaded server"""
     daemon_threads = True
     allow_reuse_address = True
 
 
 
 class nREPLServerHandler(object):
+    """Server abstraction"""
+
     def __init__(self, host, port):
         self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
         self.ip, self.port = self.server.server_address
 
     def start(self):
+        """Starts the server"""
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True
         self.server_thread.start()
 
     def stop(self):
+        """Stops the server"""
         del self.server_thread
         self.server.shutdown()
 
