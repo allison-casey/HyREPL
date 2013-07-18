@@ -1,4 +1,6 @@
 from hyrepl.repl import Repl
+from debug.debugger import debug
+
 import uuid
 import threading
 
@@ -21,9 +23,12 @@ class Session(object):
     def eval(self, code, id=False):
         self.status = 'evaluating'
         eval_code = self.repl.eval(code)
+        debug(dir(eval_code))
         if id:
-            self.code_evals[interrupt_id] = eval_code
+            self.code_evals[id] = eval_code
         self.status = 'done'
+        if id:
+            del self.code_evals[id]
         return eval_code
 
 

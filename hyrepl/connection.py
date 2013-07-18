@@ -31,7 +31,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         in_data = str(self.request.recv(1024), 'utf-8')
 
-        #cur_thread = threading.current_thread()
+        cur_thread = threading.current_thread()
+        debug(cur_thread)
         decoded_data = [i for i in decode(in_data)][0]
         
         if "session" not in decoded_data:
@@ -41,6 +42,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
         else:
             sess = decoded_data["session"]
+            if sess not in list(self.sessions.keys()):
+                self.sessions[sess] = Session(sess)
 
 
         if decoded_data["op"] in list(operations.keys()):
@@ -53,8 +56,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             debug(returned_dict)
             encoded_data = encode(returned_dict)
             
-            #debug(encoded_data)
-
             self.request.sendall(bytes(encoded_data, 'utf-8'))
 
 
@@ -79,9 +80,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     @operation("eval")
     @required_params("session", "code")
     def eval_operation(self, session, msg):
-
         code = session.eval(msg["code"], id=msg.get("id", False))
-
         return {"status": ["done"], "code": code}
 
     @operation("clone")

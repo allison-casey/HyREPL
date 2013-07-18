@@ -1,5 +1,6 @@
 import socket
 import sys
+import threading
 from nrepl.bencode import encode, decode
 
 
@@ -18,6 +19,9 @@ def client(ip, port, message):
         sock.close()
 
 
-client(ip, port, {"op": "eval", "code": "(+ 2 2 2)"})
-client(ip, port, {"op": "eval", "code": "(+ 3 3 3 3)"})
-client(ip, port, {"op": "ls-sessions"})
+a = threading.Thread(target=client, args=(ip, port, {"op": "eval", "code": "(while true (+ 2 2 2))"}))
+b = threading.Thread(target=client, args=(ip, port, {"op": "eval", "code": "(+ 3 1)"}))
+c = threading.Thread(target=client, args=(ip, port, {"op": "ls-sessions"}))
+a.start()
+b.start()
+c.start()
