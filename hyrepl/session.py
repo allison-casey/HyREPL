@@ -1,4 +1,5 @@
 from hyrepl.repl import Repl
+import uuid
 import threading
 
 
@@ -10,16 +11,25 @@ class Session(object):
 
         # All code is sent with threads so 
         # it is possible to kill off any code that gets stcuk
-        self.threads = {}
+        self.code_evals = {}
 
-    def clone(self):
-        pass
+        # True = code is being evaluated
+        # False = Code have been interrupted
+        # None = Nothing is happening 
+        self.status = 'session-idle'
 
-    def eval(self):
-        pass
+    def eval(self, code, id=False):
+        self.status = 'evaluating'
+        eval_code = self.repl.eval(code)
+        if id:
+            self.code_evals[interrupt_id] = eval_code
+        self.status = 'done'
+        return eval_code
 
-    def close(self):
-        pass
 
-    def interrupt(self):
-        pass
+    def interrupt(self, id):
+        if id not in list(self.code_evals):
+            self.status = 'interrupt-id-mismatch' 
+        else:    
+            del self.code_evals[id]
+            self.status = 'interrupted'

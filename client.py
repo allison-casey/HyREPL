@@ -18,6 +18,6 @@ def client(ip, port, message):
         sock.close()
 
 
-client(ip, port, {"op": "eval", "code": "(time (reduce + (range 1e6)))"})
-client(ip, port, {"op": "eval", "code": "(time (reduce + (range 1e6)))"})
+client(ip, port, {"op": "eval", "code": "(+ 2 2 2)"})
+client(ip, port, {"op": "eval", "code": "(+ 3 3 3 3)"})
 client(ip, port, {"op": "ls-sessions"})
