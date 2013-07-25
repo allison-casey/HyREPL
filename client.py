@@ -2,6 +2,7 @@ import socket
 import sys
 import threading
 import time
+
 from nrepl.bencode import encode, decode
 
 
@@ -26,10 +27,9 @@ def client(ip, port, message):
         sock.close()
         del sock
 
-
 #client(ip, port, {"op": "eval", "code": '(def b 2)'})
 #client(ip, port, {"op": "eval", "code": '(+ 2 b)'})
 client(ip, port, {"op": "eval", "code": '(def a (input))'})
-client(ip,port, {"op": "stdin", "value": "test"})
-client(ip,port, {"op": "eval", "code": "(print a)"})
+client(ip, port, {"op": "stdin", "value": "test"})
+client(ip, port, {"op": "eval", "code": "(print a)"})
 

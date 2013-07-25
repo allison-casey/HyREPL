@@ -1,17 +1,19 @@
 HyREPL
 =======
 
-NREPL server for Hy. Experminel/Hack project at this very moment.
-The current debug enviorment relies on sockets:
+NREPL server for Hy. Experimental/Hack project at the moment.
+The current debug environment relies on sockets (although temporarily disabled).
 
-1. install these dependencies: `blessings` and `nrepl-python-client`
-2. Connect with netcat too port `13337`.  
-3. Run `client.py` and `main.py` (main.py is the server while client just sends basic commands)   
-4. Watch the magic in the netcat session  
-  
+The project uses python 3 (tested with 3.3, but should work under any 3.x).
+
+1. install these dependencies: `blessings`, `nrepl-python-client`, `hy` and `nose`
+2. Connect with `netcat` to port `13337`.  
+3. Run `client.py` and `main.py` (`main.py` is the server while client just sends basic commands)   
+4. Watch the magic in the `netcat` session  
+
 TODO:  
 1. Fork it (yes, you!)  
-2. Add lisence    
+2. Add license    
 3. Get code running  
 4. Fill in blank stuff  
 5. ???  
