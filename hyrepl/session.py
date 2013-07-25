@@ -22,10 +22,12 @@ class Session(object):
 
     def eval(self, code, id=False):
         self.status = 'evaluating'
-        eval_code = self.repl.eval(code)
-        debug(dir(eval_code))
         if id:
-            self.code_evals[id] = eval_code
+            self.code_evals[id] = self.repl.eval(code)
+            eval_code = self.code_evals[id]()
+        else:
+            t = self.repl.eval(code)
+            eval_code = t()
         self.status = 'done'
         if id:
             del self.code_evals[id]
@@ -38,3 +40,6 @@ class Session(object):
         else:    
             del self.code_evals[id]
             self.status = 'interrupted'
+
+    def ret_sess(self):
+        return self.code_evals

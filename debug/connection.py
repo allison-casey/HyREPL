@@ -4,7 +4,7 @@ class ConnectionHandler(object):
     def __init__(self, host, port, connect=False):
         self.host = host
         self.port = port
-        self.sock = socket.socket(socket.SO_REUSEADDR) # need to set nonblocking :>
+        self.sock = socket.socket() # need to set nonblocking :>
 
         #self.sock.setblocking(0)
         # todo add recv implementation

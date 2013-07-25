@@ -37,5 +37,6 @@ class DebuggingInstance(object):
         frame.msg = msg;
         return frame
 
-DI = DebuggingInstance("localhost", 13337);
-debug = DI.debug
+#DI = DebuggingInstance("localhost", 13337);
+def f(*args): pass
+debug = f

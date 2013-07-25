@@ -1,6 +1,7 @@
 import socket
 import sys
 import threading
+import time
 from nrepl.bencode import encode, decode
 
 
@@ -13,15 +14,14 @@ def client(ip, port, message):
     sock.connect((ip, port))
     try:
         sock.sendall(msg)
-        response = str(sock.recv(1024), 'utf-8')
-        print([i for i in decode(response)])
+        while True:
+            response = str(sock.recv(2048), 'utf-8')
+            if response:
+                print(response)
+                print([i for i in decode(response)])
+            time.sleep(0.5)
     finally:
         sock.close()
 
 
-a = threading.Thread(target=client, args=(ip, port, {"op": "eval", "code": "(while true (+ 2 2 2))"}))
-b = threading.Thread(target=client, args=(ip, port, {"op": "eval", "code": "(+ 3 1)"}))
-c = threading.Thread(target=client, args=(ip, port, {"op": "ls-sessions"}))
-a.start()
-b.start()
-c.start()
+client(ip, port, {"op": "eval", "code": '(+ 1 a)'})

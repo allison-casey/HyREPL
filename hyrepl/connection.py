@@ -3,11 +3,10 @@ import threading
 import socketserver
 import uuid
 from nrepl.bencode import encode, decode 
-
+from debug.debugger import debug
 from hyrepl.session import Session
 from hyrepl.errors import NREPLError
-from debug.debugger import debug
-
+from hyrepl.repl import Repl
 
 operations = {}
 required_map = {}
@@ -25,38 +24,40 @@ class NREPLTypeError(TypeError):
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """The actuall thread we launch on ever request"""
+    allow_reuse_address = True
 
-    sessions = {}
+    sessions = {} 
+
+
+    def send(self, msg):
+        ret = encode(msg)
+        self.request.sendall(bytes(ret, 'utf-8'))
 
     def handle(self):
+        
+        ret = {"status": []}
+
         in_data = str(self.request.recv(1024), 'utf-8')
 
         cur_thread = threading.current_thread()
-        debug(cur_thread)
+        #debug(cur_thread)
         decoded_data = [i for i in decode(in_data)][0]
         
         if "session" not in decoded_data:
             sess = str(uuid.uuid4()) 
-            self.sessions[sess] = Session(sess)
-            decoded_data["session"] = sess
+            self.sessions[sess] = None
 
-        else:
-            sess = decoded_data["session"]
-            if sess not in list(self.sessions.keys()):
-                self.sessions[sess] = Session(sess)
+        ret["session"] = sess
+
+        if decoded_data["op"] in operations:
+            op = decoded_data["op"]
+            self.sessions[sess] = operations[op](self, sess, decoded_data)
+
+        ret["status"].append("done")
+        self.send(ret)
+        return 0
 
 
-        if decoded_data["op"] in list(operations.keys()):
-            returned_value = operations[decoded_data["op"]](self, self.sessions[sess], decoded_data)
-
-
-        if returned_value != None:
-            returned_dict = {"session": sess}
-            returned_dict.update(returned_value)
-            debug(returned_dict)
-            encoded_data = encode(returned_dict)
-            
-            self.request.sendall(bytes(encoded_data, 'utf-8'))
 
 
 
@@ -78,10 +79,15 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         return _
 
     @operation("eval")
-    @required_params("session", "code")
+    @required_params("code")
     def eval_operation(self, session, msg):
-        code = session.eval(msg["code"], id=msg.get("id", False))
-        return {"status": ["done"], "code": code}
+        m = {"session": session}
+        repl = Repl()
+        ret = repl.eval(msg["code"])
+        for i in ret:
+            m.update(i)
+            self.send(m)
+        
 
     @operation("clone")
     def clone_operation(self, session, msg):
@@ -106,7 +112,10 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     @operation("interrupt")
     @required_params("session")
     def interrupt_operation(self, session, msg):
-        pass
+        if "interrupt-id" in list(msg.keys()):
+            id = msg["interrupt-id"]
+        session.interrupt(id)
+        return "interrupted"
 
     @operation("load-file")
     @required_params("file")
@@ -124,12 +133,17 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
 
 
+    @operation("ls-sub-sessions")
+    def sub_sessions(self,session,msg):
+        debug(session.status)
+        return {"subs": session.ret_sess()}
+
+
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """Threaded server"""
     daemon_threads = True
-    allow_reuse_address = True
 
 
 
@@ -137,7 +151,14 @@ class nREPLServerHandler(object):
     """Server abstraction"""
 
     def __init__(self, host, port):
-        self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
+        while True:
+            try:
+                self.server = ThreadedTCPServer((host, port), ThreadedTCPRequestHandler)
+            except:
+                pass
+            else:
+                print("Connected!")
+                break
         self.ip, self.port = self.server.server_address
 
     def start(self):
