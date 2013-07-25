@@ -2,20 +2,19 @@ import socket
 import threading
 import socketserver
 import uuid
-from nrepl.bencode import encode, decode 
-from debug.debugger import debug
-from hyrepl.session import Session
-from hyrepl.errors import NREPLError
-from hyrepl.repl import Repl
-from io import StringIO
 import time
 import sys
+from io import StringIO
+
+# from debug.debugger import debug
+from nrepl.bencode import encode, decode 
+from hyrepl.session import Session
+from hyrepl.repl import Repl
+#from hyrepl.errors import NREPLError
+
 
 operations = {}
 required_map = {}
-
-
-
 
 
 class HyreplSTDIN(StringIO):
@@ -26,19 +25,14 @@ class HyreplSTDIN(StringIO):
 
     def readline(self):
         """Hackin'"""
-
         ret = self.hook(self.self2, self.sess)
         print(ret)
-
         while True:
             if ret:
-                print("lol")
+                print("readline got activated!")
                 break
-        
         print(ret)
-
         return ret
-
 
 
 class NREPLTypeError(TypeError):
@@ -47,18 +41,19 @@ class NREPLTypeError(TypeError):
         self.expression = expression
 
     def __str__(self):
-        return (super(NREPLTypeError, self).__str__() + " (line %s, column %d)"
-                % (self.expression.start_line,
-                   self.expression.start_column))
+        return (
+            super(NREPLTypeError, self).__str__() + " (line %s, column %d)" % (
+                self.expression.start_line,
+                self.expression.start_column
+            )
+        )
+
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """The actuall thread we launch on ever request"""
     allow_reuse_address = True
-
     sessions = {} 
-
     outs = []
-
     sys.stdin = HyreplSTDIN()
 
     def send(self):
@@ -69,7 +64,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             self.outs.remove(i)
 
     def _hack(self2, self, sess):
-        print("THREAD STARTED! NUUUU")
+        print("Starting thread with reqeust")
         threading.Thread(target=self.send_request, args=(self, sess)).start()
         time.sleep(1000)
 
@@ -78,41 +73,28 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         self.request.sendall(bytes(ret, 'utf-8'))
 
     def handle(self):
-
         ret = {"status": []}
-
         in_data = str(self.request.recv(1024), 'utf-8')
-
         cur_thread = threading.current_thread()
         #debug(cur_thread)
         dec_dat = decode(in_data)
         decoded_data = [i for i in dec_dat][0]
-        
         if "session" not in decoded_data:
             sess = str(uuid.uuid4()) 
             self.sessions[sess] = None
-
         ret["session"] = sess
-
         sys.stdin.self2 = self
         sys.stdin.sess = sess
         sys.stdin.hook = self._hack
-
         if decoded_data["op"] in operations:
             op = decoded_data["op"]
             self.sessions[sess] = operations[op](self, sess, decoded_data)
-
-
         if self.sessions[sess] != None:
             ret.update(self.sessions[sess])
         ret["status"].append("done")
         self.outs.append(ret)
         self.send()
         return 0
-
-
-
-
 
     def operation(operation_val):
         def _(fn):
@@ -142,7 +124,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             self.outs.append(m)
         return None
         
-
     @operation("clone")
     def clone_operation(self, session, msg):
         return {"new-session": sess}
@@ -181,20 +162,15 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         print(sys.stdin.hook)
         return None
 
-
-
     @operation("ls-sub-sessions")
     def sub_sessions(self,session,msg):
-        debug(session.status)
+        #debug(session.status)
         return {"subs": session.ret_sess()}
-
-
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """Threaded server"""
     daemon_threads = True
-
 
 
 class nREPLServerHandler(object):

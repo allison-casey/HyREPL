@@ -1,14 +1,13 @@
-from hy.lex.machine import Machine
-from hy.compiler import hy_compile
-from hy.importer import ast_compile, hy_eval, import_buffer_to_hst
-from hy.lex import tokenize
-from debug.debugger import debug
 import imp
 import sys
 import traceback
 from io import StringIO
+from hy.lex.machine import Machine
+from hy.compiler import hy_compile
+from hy.importer import ast_compile, hy_eval, import_buffer_to_hst
+from hy.lex import tokenize
 
-
+#from debug.debugger import debug
 
 
 class Repl(object):
@@ -16,7 +15,7 @@ class Repl(object):
 
     def eval(self, code):
         self.ret = []
-        print(code)
+        print("Received: %s" % code)
         try:
             ret = tokenize(code)
         except:
@@ -28,9 +27,9 @@ class Repl(object):
         #sys.stdout = StringIO()
         for i in ret:
             try:
-                print("hmmm")
+                print("Sending code to hy_eval...")
                 p = hy_eval(i, self.mod.__dict__, "__main__")
-                print("evaled")
+                print("Evaluated")
             except:
                 self._format_excp(sys.exc_info())
             else:
@@ -47,8 +46,6 @@ class Repl(object):
         exc_type, exc_value, exc_traceback = trace
         self.ret.append({'status': ['eval-error'], 'ex': exc_type.__name__, 'root-ex': exc_type.__name__})
         self.ret.append({'err': str(exc_value)})
-
-
 
     def eval_file(*args):
         pass
