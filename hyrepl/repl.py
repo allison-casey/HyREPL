@@ -6,6 +6,10 @@ from debug.debugger import debug
 import imp
 import sys
 import traceback
+from io import StringIO
+
+
+
 
 class Repl(object):
     mod = imp.new_module("__main__")
@@ -18,13 +22,25 @@ class Repl(object):
         except:
             self._format_excp(sys.exc_info())
             return self.ret
+        oldout = sys.stdout
+        oldin = sys.stdin
+        stdout = None
+        #sys.stdout = StringIO()
         for i in ret:
             try:
+                print("hmmm")
                 p = hy_eval(i, self.mod.__dict__, "__main__")
+                print("evaled")
             except:
                 self._format_excp(sys.exc_info())
             else:
-                self.ret.append({"value": p, "ns": "None"})
+                self.ret.append({"value": p, "ns": None})
+                #if p == None:
+                    #stdout = sys.stdout.getvalue()
+                    #if stdout:
+                    #    self.ret.append({'out': stdout})
+        #sys.stdout = oldout
+        #print(stdout)
         return self.ret
 
     def _format_excp(self, trace):
