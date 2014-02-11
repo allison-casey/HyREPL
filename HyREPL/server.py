@@ -37,61 +37,78 @@ nrepl._read_list = _read_list
 # Needs a better solution until we are sure the server alwys recieves the
 # whole message
 
+import uuid
+
+class Sessions():
+   uuids = {}
+
+   def del_uuid(self, uuid):
+       del self.uuids[uuid]
+
+   def get_uuid(self):
+       new = uuid.uuid4()
+       self.uuids[new] = None
+       return new
+
+   def check_uuid(self, uuid):
+       return self.uuids[uuid]
 
 
 class BencodeProtocol(asyncio.StreamReaderProtocol):
+    sess = Sessions()
 
     def connection_made(self, transport):
         self.transport = transport
 
     def data_received(self, data):
+        print("lol")
+        self._task = asyncio.async(self.handle_sess(data))
+        self._task.add_done_callback(self.callback)
+
+
+    def callback(self, x):
+        pass
+
+
+    @asyncio.coroutine
+    def handle_sess(self, data):
         print(data)
         iostring = io.StringIO(data.decode())
         try:
             a = nrepl._read_datum(iostring)
-            print(a)
         except:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
             lr = self.reader.readline()
-            print(lr)
+            print("exception")
+        else:
+            # We need to reply with bytes
+            ret = bytes(nrepl.encode(a), "utf-8")
+            print(ret)
+            self.transport.write(ret)
 
-        # We need to reply with bytes
-        ret = bytes(nrepl.encode(a), "utf-8")
-        print(ret)
-        self.transport.write(ret)
+        if not "session" in ret.keys():
+            n = self.sess.get_uuid()
+        else:
+            n = ret["session"]
+
+        # ...
 
         self.transport.close()
 
-    def bencode_send(self, data):
-        self.transport(send)
+
+    def terminated(self, f):
+        if f.done() and not f.cancelled():
+            pass
 
     # Lets wrap this!
     @property
-    def reader():
+    def reader(self):
         return self._stream_reader
+
 
     @property
     def writer():
         return self._stream_writer
-
-
-
-
-
-factory = lambda: BencodeProtocol(asyncio.StreamReader())
-loop = asyncio.get_event_loop()
-l = loop.create_server(factory, '127.0.0.1', 8888)
-s = loop.run_until_complete(l)
-
-try:
-
-    loop.run_forever()
-except KeyboardInterrupt:
-    print("exit")
-finally:
-    server.close()
-    loop.close()
-
 
 

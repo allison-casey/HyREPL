@@ -8,5 +8,9 @@ test_st = "d4:code21:(reduce + (range 20))2:op4:evale"
 test_st2 = "d4:code21:(reduce + (ran"
 
 
+print(c.read())
+
+
+
 
 
