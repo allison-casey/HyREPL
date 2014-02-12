@@ -3,22 +3,42 @@ import nrepl.bencode as nrepl
 import uuid
 from HyREPL.session import SessionHandle, Sessions, Session
 
-
+LF = b'\n'
+CRLF = b'\r\n'
+SPACE = b' '
+EMPTY = b''
 
 class BencodeProtocol(asyncio.StreamReaderProtocol):
     """Basic bencode protocol for the standar transport"""
 
     sess = Sessions()
 
+    def __init__(self, handler_cls):
+        asyncio.StreamReaderProtocol.__init__(self, asyncio.StreamReader(),
+                                              self._pseudo_connected)
+
+    def _pseudo_connected(self, reader, writer):
+        pass
+
+
     def connection_made(self, transport):
         # Assigning the transport
-        self.transport = transport
+        #self.transport = transport
+        asyncio.StreamReaderProtocol.connection_made(self, transport)
+        print("so")
+        f = asyncio.async(self.handle_sess())
+        print("This")
+        f.add_done_callback(self.callback)
+        print("lol")
 
-    def data_received(self, data):
-        # TODO: Rewrite so we dont loose data
-        print(data)
-        self._task = asyncio.async(self.handle_sess(data))
-        self._task.add_done_callback(self.callback)
+
+    #@asyncio.coroutine
+    #def data_received(self, data):
+    #    pass
+    #    # TODO: Rewrite so we dont loose data
+    #    print(data)
+    #    self._task = asyncio.async(self.handle_sess(data))
+    #    self._task.add_done_callback(self.callback)
 
 
     def callback(self, x):
@@ -27,7 +47,10 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
 
     @asyncio.coroutine
-    def handle_sess(self, data):
+    def handle_sess(self):
+        print("hm?")
+        data = yield from self.next_line()
+        print(data)
         try:
             msg = list(nrepl.decode(data.decode()))[0]
             print(msg)
@@ -55,3 +78,16 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         session.thread = th
         self.sess.add_uuid(session, th)
         th.start()
+
+    @property
+    def reader(self):
+        return self._stream_reader
+
+    @asyncio.coroutine
+    def next_line(self):
+        print("yeah")
+        line = yield from self.reader.readline()
+        print(line)
+        if not line.endswith(LF):
+            raise ValueError("Missing mandatory trailing CRLF")
+        return line
