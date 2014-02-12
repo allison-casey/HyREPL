@@ -10,24 +10,24 @@ StringIO = io.StringIO
 nrepl._read_fns = {"i": nrepl._read_int,
                    "l": nrepl._read_list,
                    "d": nrepl._read_map,
-                   "e": lambda _: "end",
+                   "e": lambda _: None,
                    # EOF
                    None: lambda _: None}
 
 
 def _read_list(s):
     data = []
-    gotten_end = False
+    #gotten_end = False
     while True:
         datum = nrepl._read_datum(s)
-        if datum == "end":
-            gotten_end = True
+        #if datum == "end":
+        #    gotten_end = True
         if not datum:
             break
         data.append(datum)
 
-    if not gotten_end:
-        raise Exception("No end gotten!")
+    #if not gotten_end:
+    #    raise Exception("No end gotten!")
 
     return data
 
@@ -45,6 +45,7 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         self.transport = transport
 
     def data_received(self, data):
+        print(data)
         self._task = asyncio.async(self.handle_sess(data))
         self._task.add_done_callback(self.callback)
 
@@ -55,7 +56,6 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
     @asyncio.coroutine
     def handle_sess(self, data):
-        print(data)
         iostring = io.StringIO(data.decode())
         try:
             a = nrepl._read_datum(iostring)
@@ -71,14 +71,13 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
             #self.transport.write(ret)
 
         if not "session" in a.keys():
-            n = self.sess.get_uuid()
+            n = str(self.sess.get_uuid())
         else:
             n = ret["session"]
 
-        th = SessionHandle(ret, n, self.transport)
+        th = SessionHandle(a, n, self.transport)
         self.sess.add_uuid(n, th)
         th.start()
-        print(th.status)
 
 
 

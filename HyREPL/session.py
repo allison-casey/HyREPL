@@ -1,6 +1,7 @@
 import uuid
 import threading
 from HyREPL.ops import find_op
+import nrepl.bencode as nrepl
 
 
 class Sessions():
@@ -36,9 +37,15 @@ class SessionHandle(threading.Thread):
         self.msg = msg
         self.transport = transport
 
+    def write(self, d):
+        l = {"session": self.sess}
+        f = dict( list(l.items()) + list(d.items()))
+        f = bytes(nrepl.encode(f), "utf-8")
+        self.transport.write(f)
+
     def run(self):
-        print(self.sess)
-        print(self.msg)
+        ret = find_op(self.msg["op"])
+        ret(self.write, self.msg)
 
     def get_status():
         return self.status
