@@ -27,8 +27,10 @@ def find_op(op):
 
 @set_description(handles={"eval": {}})
 
-def eval_expr(writer, msg):
-    d = HyREPL(msg, writer)
+def eval_expr(session, sessions, msg):
+    print(session)
+    print(sessions)
+    d = HyREPL(msg, session.write)
     d.start()
 
 
@@ -46,6 +48,6 @@ def eval_expr(writer, msg):
                           "requires": "stdin",
                           "optional": {},
                           "returns": {"status" "\"need-input\" will be sent if we need stdin"}}})
-def add_stdin(transport, msg):
+def add_stdin(sessions, session, msg):
     sys.stdin.put(msg["value"])
     sys.stdin.task_done()

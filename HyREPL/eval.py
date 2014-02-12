@@ -18,8 +18,10 @@ class HyreplSTDIN(Queue):
         """Hackin'"""
         self.writer({"status": ["need-input"]})
 
+        # such clever
+        # much hack
+        # wow
         self.join()
-
         return self.get()
 
 
@@ -30,14 +32,14 @@ class HyREPL(threading.Thread):
     mod = imp.new_module("__main__")
 
     def __init__(self, msg, writer):
+        # Making this a thread so we can kill it if it halts
         threading.Thread.__init__(self)
         self.writer = writer
         self.msg = msg
         sys.stdin = HyreplSTDIN(writer)
 
     def run(self):
-        """Evals the given code.
-           Returns a dict with reponses."""
+        """Evals the given code."""
         code = self.msg["code"]
 
         # We might catch errors when tokenizing code.
@@ -51,22 +53,26 @@ class HyREPL(threading.Thread):
         oldout = sys.stdout
         oldin = sys.stdin
         stdout = None
-        #sys.stdout = StringIO()
 
+        # TODO: add ID to responses
+        # TODO: add 'eval_msg' updates too the current session
         for i in tokens:
             try:
+                sys.stdout = StringIO()
                 p = str(hy_eval(i, self.mod.__dict__, "__main__"))
             except:
+                sys.stdout = oldout
                 self._format_excp(sys.exc_info())
             else:
-                self.writer({"value": p, "ns": 'None'})
-                # If there is nothing in return, we see if anything is in stdout
-                #if p == "None":
-                #    stdout = sys.stdout.getvalue()
-                #    if stdout:
-                #        self.writer({'out': stdout})
+                self.writer({"value": p, "ns": 'Hy'})
 
-        #sys.stdout = oldout
+                #If there is nothing in return, we see if anything is in stdout
+                if p == "None":
+                    stdout = sys.stdout.getvalue()
+                    if stdout:
+                        self.writer({'out': stdout})
+
+        sys.stdout = oldout
         self.writer({"status": ["done"]})
         return True
 
@@ -75,8 +81,6 @@ class HyREPL(threading.Thread):
         exc_type, exc_value, exc_traceback = trace
         self.writer({'status': ['eval-error'], 'ex': exc_type.__name__, 'root-ex': exc_type.__name__})
         self.writer({'err': str(exc_value)})
-
-
 
     def eval_file(*args):
         """MIA"""

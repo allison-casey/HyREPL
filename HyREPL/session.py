@@ -4,23 +4,48 @@ from HyREPL.ops import find_op
 import nrepl.bencode as nrepl
 
 
+class Session(object):
+    """ The session object contains all the info about the
+        specefic session."""
+    status = ""
+    thread = None
+    eval_id = ""
+    eval_msg = ""
+
+    def __init__(self, transport, uuid):
+        self.uuid = str(uuid)
+        self.transport = transport
+
+    def __str__(self):
+        return self.uuid
+
+    def __repr__(self):
+        return self.uuid
+
+    def write(self, d):
+        #lets try and keep oure out writer here
+        print(d)
+        l = {"session": self.uuid}
+        f = dict( list(l.items()) + list(d.items()))
+        f = bytes(nrepl.encode(f), "utf-8")
+        self.transport.write(f)
+
+
+
 class Sessions():
+    """ Object keeping track of the session and corresponding thread """
     uuids = {}
 
     def del_uuid(self, uuid):
         del self.uuids[uuid]
 
-    def get_uuid(self):
-        new = uuid.uuid4()
-        return new
-
     def add_uuid(self, uuid, thread):
         self.uuids[uuid] = thread
 
-    def check_uuid(self, uuid):
+    def get_uuid(self, uuid):
         return self.uuids[uuid]
 
-    def get_status():
+    def get_status(uuid):
         pass
 
     def kill():
@@ -28,24 +53,17 @@ class Sessions():
 
 
 class SessionHandle(threading.Thread):
-    status = None
+    """ Basic handler/thread for all of our session work
+        like finding the correct op for the msg we got."""
 
-    def __init__(self, msg, sess, transport):
+    def __init__(self, msg, sessions, session):
         threading.Thread.__init__(self)
         self.daemon = True
-        self.sess = sess
+        self.sessions = sessions
+        self.session = session
         self.msg = msg
-        self.transport = transport
-
-    def write(self, d):
-        l = {"session": self.sess}
-        f = dict( list(l.items()) + list(d.items()))
-        f = bytes(nrepl.encode(f), "utf-8")
-        self.transport.write(f)
 
     def run(self):
         ret = find_op(self.msg["op"])
-        ret(self.write, self.msg)
+        ret(self.session, self.sessions, self.msg)
 
-    def get_status():
-        return self.status
