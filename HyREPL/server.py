@@ -1,6 +1,7 @@
 import asyncio
 import nrepl.bencode as nrepl
 import io
+from HyREPL.session import SessionHandle, Sessions
 
 StringIO = io.StringIO
 
@@ -37,23 +38,6 @@ nrepl._read_list = _read_list
 # Needs a better solution until we are sure the server alwys recieves the
 # whole message
 
-import uuid
-
-class Sessions():
-   uuids = {}
-
-   def del_uuid(self, uuid):
-       del self.uuids[uuid]
-
-   def get_uuid(self):
-       new = uuid.uuid4()
-       self.uuids[new] = None
-       return new
-
-   def check_uuid(self, uuid):
-       return self.uuids[uuid]
-
-
 class BencodeProtocol(asyncio.StreamReaderProtocol):
     sess = Sessions()
 
@@ -61,7 +45,6 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         self.transport = transport
 
     def data_received(self, data):
-        print("lol")
         self._task = asyncio.async(self.handle_sess(data))
         self._task.add_done_callback(self.callback)
 
@@ -79,22 +62,24 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         except:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
-            lr = self.reader.readline()
+            lr = yield from self.reader.readline()
             print("exception")
+            print(lr)
         else:
             # We need to reply with bytes
             ret = bytes(nrepl.encode(a), "utf-8")
-            print(ret)
-            self.transport.write(ret)
+            #self.transport.write(ret)
 
-        if not "session" in ret.keys():
+        if not "session" in a.keys():
             n = self.sess.get_uuid()
         else:
             n = ret["session"]
 
-        # ...
+        th = SessionHandle(ret, n, self.transport)
+        self.sess.add_uuid(n, th)
+        th.start()
+        print(th.status)
 
-        self.transport.close()
 
 
     def terminated(self, f):
