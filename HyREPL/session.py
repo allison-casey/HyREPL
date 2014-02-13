@@ -34,16 +34,18 @@ class Session(object):
 
 class Sessions():
     """ Object keeping track of the session and corresponding thread """
-    uuids = {}
+    uuids = []
 
     def del_uuid(self, uuid):
         del self.uuids[uuid]
 
-    def add_uuid(self, uuid, thread):
-        self.uuids[uuid] = thread
+    def add_uuid(self, uuid):
+        self.uuids.append(uuid)
 
     def get_uuid(self, uuid):
-        return self.uuids[uuid]
+        if uuid in self.uuids:
+            return True
+        return False
 
     def get_status(uuid):
         pass

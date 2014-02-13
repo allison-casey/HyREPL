@@ -47,11 +47,11 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         # we assing the old session thread
         if not "session" in msg.keys():
             session = Session(self.transport, uuid.uuid4())
-        else:
-            session = self.sess.get_uuid(ret["session"])
+        elif self.sess.get_uuid(msg["session"]):
+            session = msg["session"]
 
         # Should need some revising
         th = SessionHandle(msg, self.sess, session)
         session.thread = th
-        self.sess.add_uuid(session, th)
+        self.sess.add_uuid(session)
         th.start()

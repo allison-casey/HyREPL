@@ -34,6 +34,15 @@ def eval_expr(session, sessions, msg):
     d.start()
 
 
+@set_description(handles={"clone": {}})
+def clone_sess(session, sessions, msg):
+    import uuid
+    from HyREPL.session import Session
+    sess = Session(session.transport, uuid.uuid4())
+    sessions.add_uuid(sess)
+    session.write({"status": ["done"],
+                   "new-session": str(sess)})
+
 
 # Yes, this is a totally sane decorator
 @set_description(
