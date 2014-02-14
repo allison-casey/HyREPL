@@ -8,9 +8,9 @@ class Session(object):
     """ The session object contains all the info about the
         specefic session."""
     status = ""
-    thread = None
     eval_id = ""
     eval_msg = ""
+    _thread = None
 
     def __init__(self, transport, uuid):
         self.uuid = str(uuid)
@@ -22,6 +22,7 @@ class Session(object):
     def __repr__(self):
         return self.uuid
 
+
     def write(self, d):
         #lets try and keep oure out writer here
         print(d)
@@ -30,28 +31,45 @@ class Session(object):
         f = bytes(nrepl.encode(f), "utf-8")
         self.transport.write(f)
 
+    @property
+    def thread(self):
+        return self._thread
+
+    @thread.setter
+    def thread(self, th):
+        if self._thread:
+            del self._thread
+        self._thread = th
+
+    @thread.deleter
+    def thread(self):
+        del self._thread
+
 
 
 class Sessions():
     """ Object keeping track of the session and corresponding thread """
-    uuids = []
+    uuids = {}
 
     def del_uuid(self, uuid):
         del self.uuids[uuid]
 
     def add_uuid(self, uuid):
-        self.uuids.append(uuid)
+        self.uuids[str(uuid)] = uuid
 
-    def get_uuid(self, uuid):
-        if uuid in self.uuids:
+    def check_uuid(self, uuid):
+        print(str(uuid))
+        print(self.uuids)
+        if str(uuid) in self.uuids.keys():
             return True
         return False
 
-    def get_status(uuid):
-        pass
+    def get_uuid(self, uuid):
+        return self.uuids[str(uuid)]
 
-    def kill():
-        pass
+    def kill(self, uuid):
+        self.uuids[str(uuid)].thread.stop()
+        del self.uuids[str(uuid)]
 
 
 class SessionHandle(threading.Thread):
