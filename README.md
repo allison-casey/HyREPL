@@ -1,8 +1,9 @@
 HyREPL 
 ======
-
+  
 Experimental! 
 =============
-
-Install
-`pip install -r requirements`
+Requires Python3.  
+  
+Install  
+`pip install -r requirements`  
