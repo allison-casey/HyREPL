@@ -25,7 +25,8 @@ class Session(object):
 
     def write(self, d):
         #lets try and keep oure out writer here
-        print(d)
+        #print(d)
+        #print("Heyooo")
         l = {"session": self.uuid}
         f = dict( list(l.items()) + list(d.items()))
         f = bytes(nrepl.encode(f), "utf-8")
@@ -58,8 +59,8 @@ class Sessions():
         self.uuids[str(uuid)] = uuid
 
     def check_uuid(self, uuid):
-        print(str(uuid))
-        print(self.uuids)
+        #print(str(uuid))
+        #print(self.uuids)
         if str(uuid) in self.uuids.keys():
             return True
         return False

@@ -16,7 +16,7 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
     def data_received(self, data):
         # TODO: Rewrite so we dont loose data
-        print(data)
+        #print(data)
         self._task = asyncio.async(self.handle_sess(data))
         self._task.add_done_callback(self.callback)
 
@@ -30,14 +30,14 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
     def handle_sess(self, data):
         try:
             msg = list(nrepl.decode(data.decode()))[0]
-            print(msg)
+            #print(msg)
         except:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
             # TODO: This dosnt really work
             lr = yield from self.reader.readline()
-            print("exception")
-            print(lr)
+            #print("exception")
+            #print(lr)
         else:
             # We need to reply with bytes
             ret = bytes(nrepl.encode(msg), "utf-8")
@@ -48,7 +48,7 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         if not "session" in msg.keys():
             session = Session(self.transport, uuid.uuid4())
         elif self.sess.check_uuid(msg["session"]):
-            print("\nTrue")
+            #print("\nTrue")
             session = self.sess.get_uuid(msg["session"])
 
         # Should need some revising

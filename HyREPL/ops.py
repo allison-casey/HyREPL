@@ -23,8 +23,8 @@ def find_op(op):
 
 @set_description(handles={"eval": {}})
 def eval_expr(session, sessions, msg):
-    print(session)
-    print(sessions)
+    #print(session)
+    #print(sessions)
     if msg["code"] in hints.keys():
         work_around_it(session,sessions,msg)
         return

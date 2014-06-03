@@ -64,6 +64,8 @@ class HyREPL(threading.Thread):
                 sys.stdout = oldout
                 self._format_excp(sys.exc_info())
             else:
+                #Debugging purposes
+                #sys.stdout = oldout
                 self.writer({"value": p, "ns": 'Hy'})
 
                 #If there is nothing in return, we see if anything is in stdout

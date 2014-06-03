@@ -4,7 +4,5 @@ HyREPL
 Experimental! 
 =============
 
-Dependencies:  
-asyncio  
-nrepl-python-client  
-hy  
+Install
+`pip install -r requirements`
