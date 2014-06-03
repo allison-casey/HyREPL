@@ -29,15 +29,18 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
     @asyncio.coroutine
     def handle_sess(self, data):
         try:
-            msg = list(nrepl.decode(data.decode()))[0]
+            #print(data)
+            msg = list(nrepl.decode(data.decode()))
             #print(msg)
+            msg = msg[0]
         except:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
             # TODO: This dosnt really work
-            lr = yield from self.reader.readline()
+            #lr = yield from self.reader.readline()
             #print("exception")
             #print(lr)
+            return
         else:
             # We need to reply with bytes
             ret = bytes(nrepl.encode(msg), "utf-8")

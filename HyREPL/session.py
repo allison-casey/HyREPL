@@ -29,8 +29,16 @@ class Session(object):
         #print("Heyooo")
         l = {"session": self.uuid}
         f = dict( list(l.items()) + list(d.items()))
-        f = bytes(nrepl.encode(f), "utf-8")
+        ret = nrepl.encode(f)
+        f = bytes(ret, "utf-8")
         self.transport.write(f)
+        if "done" in ret and "status" in ret:
+            # Asyncio blocks the writing, because async.
+            # Cheap workaround so we always get the responses
+            # This should only trigger if the status of the nrepl
+            # contains done and status. 
+            # However, this will fail if someone decides to print "status done".
+            self.transport.write_eof()
 
     @property
     def thread(self):
