@@ -10,7 +10,7 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self.buf = ""
+        self.buf = b""
 
     def connection_made(self, transport):
         # Assigning the transport
@@ -18,9 +18,11 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
     def data_received(self, data):
         # TODO: Rewrite so we dont loose data
-        self.buf += data.decode()
+        self.buf += data
         try:
-            msg = bencode.decode(bytes(self.buf, 'utf-8'))
+            msg, rest = bencode.decode(self.buf)
+            print(type(msg), msg, self.buf)
+            self.buf = rest
         except Exception as err:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
@@ -33,9 +35,8 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
             if len(msg) == 0:
                 return
             # We need to reply with bytes
-            self.buf = ""
             ret = bencode.encode(msg)
-            #self.transport.write(ret)
+            # self.transport.write(ret)
 
         # Looking for a session inside the keys, and if there is one
         # we assing the old session thread
@@ -50,6 +51,9 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         session.thread = th
         self.sess.add_uuid(session)
         th.start()
+        if len(self.buf) != 0:
+            # Maybe there's another message
+            self.data_received(b"")
 
     def feed_eof(self):
         pass

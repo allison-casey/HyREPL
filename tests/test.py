@@ -5,24 +5,29 @@ import threading
 import queue
 import sys
 
-from HyREPL.bencode import encode, decode
+from HyREPL.bencode import encode, decode, decode_multiple
 from main import start_server
-
 
 ip = "localhost"
 port = 1337
+
+def test_bencode():
+    d = { "foo": 42, "spam": [1, 2, 'a'] }
+
+    print(decode(b"d5:value1:47:session36:31594b80-7f2e-4915-9969-f1127d562cc42:ns2:Hyed6:statusl4:donee7:session36:31594b80-7f2e-4915-9969-f1127d562cc4e"))
+    assert d == decode(encode(d))[0]
 
 def soc_send(message, return_reply=True):
     reply = socket.create_connection((ip, port))
     read_from = reply.makefile('rw')
     msg = encode(message)
     ret = []
-    reply.sendall(bytes(msg, 'utf-8'))
+    reply.sendall(msg)
     if return_reply:
         while True:
             response = read_from.read(2048)
             if response:
-                [ret.append(l) for l in decode(response)]
+                [ret.append(l) for l in decode_multiple(bytes(response, 'utf-8'))]
             if "done" in response and "status" in response:
                 break
             reply.close()

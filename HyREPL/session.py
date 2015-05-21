@@ -26,7 +26,7 @@ class Session(object):
     def write(self, d):
         rep = {"session": self.uuid}
         rep.update(d)
-        self.transport.write(bytes(bencode.encode(rep), "utf-8"))
+        self.transport.write(bencode.encode(rep))
         if "done" in rep.get("status", []):
             # Asyncio blocks the writing, because async.
             # Cheap workaround so we always get the responses
