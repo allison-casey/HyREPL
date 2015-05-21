@@ -21,7 +21,6 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         self.buf += data
         try:
             msg, rest = bencode.decode(self.buf)
-            print(type(msg), msg, self.buf)
             self.buf = rest
         except Exception as err:
             # Lets just handle the fetching of more data if
