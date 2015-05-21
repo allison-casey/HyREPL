@@ -1,14 +1,16 @@
 import asyncio
-import nrepl.bencode as nrepl
 import uuid
 from HyREPL.session import SessionHandle, Sessions, Session
-
-
+from HyREPL import bencode
 
 class BencodeProtocol(asyncio.StreamReaderProtocol):
     """Basic bencode protocol for the standar transport"""
 
     sess = Sessions()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.buf = ""
 
     def connection_made(self, transport):
         # Assigning the transport
@@ -16,24 +18,10 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
 
     def data_received(self, data):
         # TODO: Rewrite so we dont loose data
-        #print(data)
-        self._task = asyncio.async(self.handle_sess(data))
-        self._task.add_done_callback(self.callback)
-
-
-    def callback(self, x):
-        # wat
-        pass
-
-
-    @asyncio.coroutine
-    def handle_sess(self, data):
+        self.buf += data.decode()
         try:
-            #print(data)
-            msg = list(nrepl.decode(data.decode()))
-            #print(msg)
-            msg = msg[0]
-        except:
+            msg = bencode.decode(bytes(self.buf, 'utf-8'))
+        except Exception as err:
             # Lets just handle the fetching of more data if
             # bencodes decoder never gets an end
             # TODO: This dosnt really work
@@ -42,8 +30,11 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
             #print(lr)
             return
         else:
+            if len(msg) == 0:
+                return
             # We need to reply with bytes
-            ret = bytes(nrepl.encode(msg), "utf-8")
+            self.buf = ""
+            ret = bencode.encode(msg)
             #self.transport.write(ret)
 
         # Looking for a session inside the keys, and if there is one
@@ -59,3 +50,10 @@ class BencodeProtocol(asyncio.StreamReaderProtocol):
         session.thread = th
         self.sess.add_uuid(session)
         th.start()
+
+    def feed_eof(self):
+        pass
+
+    def callback(self, x):
+        # wat
+        pass

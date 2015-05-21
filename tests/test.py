@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 import os, unittest, subprocess, re, signal, time
 import socket
-import nrepl
 import threading
 import queue
 import sys
 
-from nrepl.bencode import encode, decode
+from HyREPL.bencode import encode, decode
 from main import start_server
 
 

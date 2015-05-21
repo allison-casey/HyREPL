@@ -1,7 +1,7 @@
 import uuid
 import threading
 from HyREPL.ops import find_op
-import nrepl.bencode as nrepl
+from HyREPL import bencode
 
 
 class Session(object):
@@ -24,21 +24,16 @@ class Session(object):
 
 
     def write(self, d):
-        #lets try and keep oure out writer here
-        #print(d)
-        #print("Heyooo")
-        l = {"session": self.uuid}
-        f = dict( list(l.items()) + list(d.items()))
-        ret = nrepl.encode(f)
-        f = bytes(ret, "utf-8")
-        self.transport.write(f)
-        if "done" in ret and "status" in ret:
+        rep = {"session": self.uuid}
+        rep.update(d)
+        self.transport.write(bytes(bencode.encode(rep), "utf-8"))
+        if "done" in rep.get("status", []):
             # Asyncio blocks the writing, because async.
             # Cheap workaround so we always get the responses
             # This should only trigger if the status of the nrepl
             # contains done and status. 
-            # However, this will fail if someone decides to print "status done".
             self.transport.write_eof()
+            self.transport.close()
 
     @property
     def thread(self):
