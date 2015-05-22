@@ -55,7 +55,6 @@ class HyREPL(threading.Thread):
         oldin = sys.stdin
         stdout = None
 
-        # TODO: add ID to responses
         # TODO: add 'eval_msg' updates too the current session
         for i in tokens:
             try:
@@ -65,8 +64,6 @@ class HyREPL(threading.Thread):
                 sys.stdout = oldout
                 self._format_excp(sys.exc_info())
             else:
-                #Debugging purposes
-                #sys.stdout = oldout
                 self.writer({"value": p, "ns": 'Hy', "id": self.msg.get("id")})
 
                 #If there is nothing in return, we see if anything is in stdout
