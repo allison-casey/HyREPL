@@ -31,11 +31,12 @@ class HyREPL(threading.Thread):
     # As with normal hy evulation, everything is in reality a top level module.
     mod = imp.new_module("__main__")
 
-    def __init__(self, msg, writer):
+    def __init__(self, msg, session, writer):
         # Making this a thread so we can kill it if it halts
         threading.Thread.__init__(self)
         self.writer = writer
         self.msg = msg
+        self.session = session
         sys.stdin = HyreplSTDIN(writer)
 
     def run(self):
@@ -81,6 +82,7 @@ class HyREPL(threading.Thread):
     def _format_excp(self, trace):
         # Format return exception
         exc_type, exc_value, exc_traceback = trace
+        self.session.last_traceback = exc_traceback
         self.writer({'status': ['eval-error'], 'ex': exc_type.__name__, 'root-ex': exc_type.__name__, "id": self.msg.get("id")})
         self.writer({'err': str(exc_value), "id": self.msg.get("id")})
 

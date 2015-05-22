@@ -8,6 +8,7 @@ class Session(object):
     status = ""
     eval_id = ""
     eval_msg = ""
+    last_traceback = None
 
     def __init__(self, sessions):
         self.sessions = sessions

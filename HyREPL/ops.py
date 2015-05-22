@@ -25,7 +25,7 @@ def eval_expr(session, sessions, msg, transport):
     if msg["code"] in hints.keys():
         work_around_it(session, msg, transport)
         return
-    d = HyREPL(msg, lambda x: session.write(x, transport))
+    d = HyREPL(msg, session, lambda x: session.write(x, transport))
     d.start()
 
 @set_description(handles={"load-file": {}})
