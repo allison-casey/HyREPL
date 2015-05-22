@@ -1,8 +1,6 @@
-import uuid
-import threading
+from uuid import uuid4
 from HyREPL.ops import find_op
 from HyREPL import bencode
-
 
 class Session(object):
     """ The session object contains all the info about the
@@ -10,11 +8,11 @@ class Session(object):
     status = ""
     eval_id = ""
     eval_msg = ""
-    _thread = None
 
-    def __init__(self, transport, uuid):
-        self.uuid = str(uuid)
-        self.transport = transport
+    def __init__(self, sessions):
+        self.sessions = sessions
+        self.uuid = str(uuid4())
+        self.sessions[self.uuid] = self
 
     def __str__(self):
         return self.uuid
@@ -22,72 +20,13 @@ class Session(object):
     def __repr__(self):
         return self.uuid
 
+    def write(self, msg, transport):
+        assert "id" in msg
+        msg["session"] = self.uuid
+        print("out:", msg)
+        transport.sendall(bencode.encode(msg))
 
-    def write(self, d):
-        rep = {"session": self.uuid}
-        rep.update(d)
-        self.transport.write(bencode.encode(rep))
-        if "done" in rep.get("status", []):
-            # Asyncio blocks the writing, because async.
-            # Cheap workaround so we always get the responses
-            # This should only trigger if the status of the nrepl
-            # contains done and status. 
-            self.transport.write_eof()
-            self.transport.close()
-
-    @property
-    def thread(self):
-        return self._thread
-
-    @thread.setter
-    def thread(self, th):
-        if self._thread:
-            del self._thread
-        self._thread = th
-
-    @thread.deleter
-    def thread(self):
-        del self._thread
-
-
-
-class Sessions():
-    """ Object keeping track of the session and corresponding thread """
-    uuids = {}
-
-    def del_uuid(self, uuid):
-        del self.uuids[uuid]
-
-    def add_uuid(self, uuid):
-        self.uuids[str(uuid)] = uuid
-
-    def check_uuid(self, uuid):
-        #print(str(uuid))
-        #print(self.uuids)
-        if str(uuid) in self.uuids.keys():
-            return True
-        return False
-
-    def get_uuid(self, uuid):
-        return self.uuids[str(uuid)]
-
-    def kill(self, uuid):
-        self.uuids[str(uuid)].thread.stop()
-        del self.uuids[str(uuid)]
-
-
-class SessionHandle(threading.Thread):
-    """ Basic handler/thread for all of our session work
-        like finding the correct op for the msg we got."""
-
-    def __init__(self, msg, sessions, session):
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self.sessions = sessions
-        self.session = session
-        self.msg = msg
-
-    def run(self):
-        ret = find_op(self.msg["op"])
-        ret(self.session, self.sessions, self.msg)
-
+    def handle(self, msg, transport):
+        print("in:", msg)
+        op = find_op(msg["op"])
+        op(self, self.sessions, msg, transport)

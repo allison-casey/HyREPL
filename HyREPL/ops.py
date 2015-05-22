@@ -20,27 +20,37 @@ def find_op(op):
             return fn
 
 
-
 @set_description(handles={"eval": {}})
-def eval_expr(session, sessions, msg):
-    #print(session)
-    #print(sessions)
+def eval_expr(session, sessions, msg, transport):
     if msg["code"] in hints.keys():
-        work_around_it(session,sessions,msg)
+        work_around_it(session, msg, transport)
         return
-    d = HyREPL(msg, session.write)
+    d = HyREPL(msg, lambda x: session.write(x, transport))
     d.start()
 
+@set_description(handles={"load-file": {}})
+def eval_file(session, sessions, msg, transport):
+    code = msg["file"].split(" ", 2)[2]
+    print(code)
+    msg["code"] = code
+    del msg["file"]
+    find_op("eval")(session, sessions, msg, transport)
 
 @set_description(handles={"clone": {}})
-def clone_sess(session, sessions, msg):
-    import uuid
+def clone_sess(session, sessions, msg, transport):
     from HyREPL.session import Session
-    sess = Session(session.transport, uuid.uuid4())
-    sessions.add_uuid(sess)
-    session.write({"status": ["done"],
-                   "new-session": str(sess)})
+    sess = Session(sessions)
+    sessions[sess.uuid] = sess
+    session.write({"status": ["done"], "id": msg["id"], "new-session": str(sess)}, transport)
 
+@set_description(handles={"describe": {}})
+def describe_self(session, sessions, msg, transport):
+    reply = {"status": ["done"],
+            "id": msg["id"],
+            "versions": { "nrepl": { "major": 2, "minor": 1 } }, # XXX: java and clojure versions?
+            "ops": {}, # XXX
+            "session": session.uuid}
+    session.write(reply, transport)
 
 # Yes, this is a totally sane decorator
 @set_description(
@@ -55,6 +65,6 @@ def clone_sess(session, sessions, msg):
                           "requires": "stdin",
                           "optional": {},
                           "returns": {"status": "\"need-input\" will be sent if we need stdin"}}})
-def add_stdin(sessions, session, msg):
+def add_stdin(sessions, session, msg, transport):
     sys.stdin.put(msg["value"])
     sys.stdin.task_done()

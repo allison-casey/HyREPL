@@ -16,7 +16,7 @@ class HyreplSTDIN(Queue):
 
     def readline(self):
         """Hackin'"""
-        self.writer({"status": ["need-input"]})
+        self.writer({"status": ["need-input"], "id": self.msg.get("id")})
 
         # such clever
         # much hack
@@ -66,23 +66,23 @@ class HyREPL(threading.Thread):
             else:
                 #Debugging purposes
                 #sys.stdout = oldout
-                self.writer({"value": p, "ns": 'Hy'})
+                self.writer({"value": p, "ns": 'Hy', "id": self.msg.get("id")})
 
                 #If there is nothing in return, we see if anything is in stdout
                 if p == "None":
                     stdout = sys.stdout.getvalue()
                     if stdout:
-                        self.writer({'out': stdout})
+                        self.writer({'out': stdout, "id": self.msg.get("id")})
 
         sys.stdout = oldout
-        self.writer({"status": ["done"]})
+        self.writer({"status": ["done"], "id": self.msg.get("id")})
         return True
 
     def _format_excp(self, trace):
         # Format return exception
         exc_type, exc_value, exc_traceback = trace
-        self.writer({'status': ['eval-error'], 'ex': exc_type.__name__, 'root-ex': exc_type.__name__})
-        self.writer({'err': str(exc_value)})
+        self.writer({'status': ['eval-error'], 'ex': exc_type.__name__, 'root-ex': exc_type.__name__, "id": self.msg.get("id")})
+        self.writer({'err': str(exc_value), "id": self.msg.get("id")})
 
     def eval_file(*args):
         """MIA"""
