@@ -43,6 +43,14 @@ def clone_sess(session, sessions, msg, transport):
     sessions[sess.uuid] = sess
     session.write({"status": ["done"], "id": msg["id"], "new-session": str(sess)}, transport)
 
+@set_description(handles={"close": {}})
+def close_sess(session, sessions, msg, transport):
+    try:
+        del sessions[msg.get("session", "")]
+    except KeyError:
+        pass
+    transport.close()
+
 @set_description(handles={"describe": {}})
 def describe_self(session, sessions, msg, transport):
     reply = {"status": ["done"],

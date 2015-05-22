@@ -17,7 +17,10 @@ class ReplRequestHandler(BaseRequestHandler):
         print("New client")
         buf = b""
         while True:
-            newstuff = self.request.recv(1024)
+            try:
+                newstuff = self.request.recv(1024)
+            except OSError:
+                break
             if len(newstuff) == 0:
                 break
             buf += newstuff
