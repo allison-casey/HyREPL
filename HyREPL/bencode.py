@@ -66,6 +66,8 @@ def encode(thing):
         return encode_bytes(thing)
     elif isinstance(thing, dict):
         return encode_dict(thing)
+    elif thing is None:
+        return encode_bytes(b"")
     return encode_list(thing)
 
 def encode_int(thing):
