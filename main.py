@@ -4,9 +4,9 @@ from HyREPL.session import Session
 from HyREPL import bencode
 
 import threading
-from socketserver import ForkingMixIn, TCPServer, BaseRequestHandler
+from socketserver import ThreadingMixIn, ForkingMixIn, TCPServer, BaseRequestHandler
 
-class ReplServer(ForkingMixIn, TCPServer): pass
+class ReplServer(ThreadingMixIn, TCPServer): pass
 
 sessions = {}
 
