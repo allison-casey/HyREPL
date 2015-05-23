@@ -13,7 +13,7 @@ To run tests you need to have a server running in the background.
 Using HyREPL with fireplace
 ===========================
 Open a Hy file and set the file type to `clojure`: `set filetype=clojure`. Then
-run `main.py` in your target directory. Connect vim to the REPL with `:Connect`.
+run `main.hy` in your target directory. Connect vim to the REPL with `:Connect`.
 Use `nrepl` as the protocol, `localhost` as the host and the port number HyREPL
 printed on start.
 
