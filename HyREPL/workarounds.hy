@@ -1,5 +1,4 @@
 (import traceback)
-(import sys)
 
 (defn work-around-it [session msg transport]
   ((get hints (get msg "code"))
@@ -45,5 +44,3 @@
   "(*2 2)" work-around-last
   "(*3 3)" work-around-last
   })
-
-(print hints :file sys.stderr)
