@@ -10,9 +10,10 @@ from io import StringIO
 
 class HyreplSTDIN(Queue):
     """This is hack to override sys.stdin."""
-    def __init__(self, write):
+    def __init__(self, write, msg):
         super().__init__()
         self.writer = write
+        self.msg = msg
 
     def readline(self):
         """Hackin'"""
@@ -37,7 +38,7 @@ class HyREPL(threading.Thread):
         self.writer = writer
         self.msg = msg
         self.session = session
-        sys.stdin = HyreplSTDIN(writer)
+        sys.stdin = HyreplSTDIN(writer, msg)
 
     def run(self):
         """Evals the given code."""
