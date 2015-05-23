@@ -1,5 +1,6 @@
 (import sys [uuid [uuid4]])
-(import [HyREPL [bencode]]
+(import
+  [HyREPL [bencode]]
   [HyREPL.ops [find-op]])
 
 
