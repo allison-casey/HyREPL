@@ -9,7 +9,7 @@
 ;
 (import sys threading)
 (import
-  [HyREPL.eval [HyreplSTDIN HyREPL]]
+  [HyREPL.eval [HyREPL]]
   [HyREPL.workarounds [hints work-around-it]])
 
 
