@@ -9,7 +9,7 @@ import os
 from socketserver import ThreadingMixIn, UnixStreamServer
 
 from HyREPL.bencode import encode, decode, decode_multiple
-from main import ReplRequestHandler
+from HyREPL.server import ReplRequestHandler
 
 sock = "/tmp/HyREPL-test"
 class TestServer(ThreadingMixIn, UnixStreamServer): pass

@@ -48,8 +48,7 @@ def eval_file(session, sessions, msg, transport):
 @set_description(handles={"clone": {}})
 def clone_sess(session, sessions, msg, transport):
     from HyREPL.session import Session
-    sess = Session(sessions)
-    sessions[sess.uuid] = sess
+    sess = Session()
     session.write({"status": ["done"], "id": msg["id"], "new-session": str(sess)}, transport)
 
 @set_description(handles={"close": {}})
