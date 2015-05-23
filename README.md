@@ -8,7 +8,8 @@ Requires Python3.
 Install  
 `pip install -r requirements`  
 
-To run tests you need to have a server running in the background.
+To run the tests, simply execute `nosetests-3.4 -v`. The tests create (and bind
+to) a socket at `/tmp/HyREPL-test`.
 
 Using HyREPL with fireplace
 ===========================
