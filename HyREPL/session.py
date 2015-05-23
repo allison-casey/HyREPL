@@ -30,5 +30,4 @@ class Session(object):
 
     def handle(self, msg, transport):
         print("in:", msg)
-        op = find_op(msg["op"])
-        op(self, sessions, msg, transport)
+        find_op(msg["op"])(self, msg, transport)

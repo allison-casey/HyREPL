@@ -7,6 +7,7 @@
 # - load-file (file name not handled)
 # - eval
 
+from HyREPL import session
 from HyREPL.eval import HyreplSTDIN, HyREPL
 from HyREPL.workarounds import hints, work_around_it
 import threading
@@ -30,7 +31,7 @@ def find_op(op):
 
 
 @set_description(handles={"eval": {}})
-def eval_expr(session, sessions, msg, transport):
+def eval_expr(session, msg, transport):
     if msg["code"] in hints.keys():
         work_around_it(session, msg, transport)
         return
@@ -38,29 +39,29 @@ def eval_expr(session, sessions, msg, transport):
     d.start()
 
 @set_description(handles={"load-file": {}})
-def eval_file(session, sessions, msg, transport):
+def eval_file(session, msg, transport):
     code = msg["file"].split(" ", 2)[2]
     print(code)
     msg["code"] = code
     del msg["file"]
-    find_op("eval")(session, sessions, msg, transport)
+    find_op("eval")(session, msg, transport)
 
 @set_description(handles={"clone": {}})
-def clone_sess(session, sessions, msg, transport):
+def clone_sess(session, msg, transport):
     from HyREPL.session import Session
     sess = Session()
     session.write({"status": ["done"], "id": msg["id"], "new-session": str(sess)}, transport)
 
 @set_description(handles={"close": {}})
-def close_sess(session, sessions, msg, transport):
+def close_sess(session, msg, transport):
     try:
-        del sessions[msg.get("session", "")]
+        del session.sessions[msg.get("session", "")]
     except KeyError:
         pass
     transport.close()
 
 @set_description(handles={"describe": {}})
-def describe_self(session, sessions, msg, transport):
+def describe_self(session, msg, transport):
     reply = {"status": ["done"],
             "id": msg["id"],
             "versions": { "nrepl": { "major": 2, "minor": 1 } }, # XXX: java and clojure versions?
@@ -81,6 +82,6 @@ def describe_self(session, sessions, msg, transport):
                           "requires": "stdin",
                           "optional": {},
                           "returns": {"status": "\"need-input\" will be sent if we need stdin"}}})
-def add_stdin(sessions, session, msg, transport):
+def add_stdin(session, msg, transport):
     sys.stdin.put(msg["value"])
     sys.stdin.task_done()
