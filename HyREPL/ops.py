@@ -7,7 +7,6 @@
 # - load-file (file name not handled)
 # - eval
 
-from HyREPL import session
 from HyREPL.eval import HyreplSTDIN, HyREPL
 from HyREPL.workarounds import hints, work_around_it
 import threading
@@ -55,7 +54,8 @@ def clone_sess(session, msg, transport):
 @set_description(handles={"close": {}})
 def close_sess(session, msg, transport):
     try:
-        del session.sessions[msg.get("session", "")]
+        from HyREPL.session import sessions
+        del sessions[msg.get("session", "")]
     except KeyError:
         pass
     transport.close()
