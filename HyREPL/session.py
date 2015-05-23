@@ -1,3 +1,5 @@
+import sys
+
 from uuid import uuid4
 from HyREPL.ops import find_op
 from HyREPL import bencode
@@ -25,9 +27,9 @@ class Session(object):
     def write(self, msg, transport):
         assert "id" in msg
         msg["session"] = self.uuid
-        print("out:", msg)
+        print("out:", msg, file=sys.stderr)
         transport.sendall(bencode.encode(msg))
 
     def handle(self, msg, transport):
-        print("in:", msg)
+        print("in:", msg, file=sys.stderr)
         find_op(msg["op"])(self, msg, transport)

@@ -40,7 +40,7 @@ def eval_expr(session, msg, transport):
 @set_description(handles={"load-file": {}})
 def eval_file(session, msg, transport):
     code = msg["file"].split(" ", 2)[2]
-    print(code)
+    print(code, file=sys.stderr)
     msg["code"] = code
     del msg["file"]
     find_op("eval")(session, msg, transport)

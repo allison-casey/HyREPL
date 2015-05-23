@@ -19,7 +19,6 @@ def work_around_init_2(session, msg, w):
 def work_around_traceback(session, msg, w):
     # function(file:line)
     w({"out": "success"})
-    print(session.last_traceback)
     items = []
     for fname, line, func, text in traceback.extract_tb(session.last_traceback):
         items.append("{2}({0}:{1})".format(fname, line, func, text))

@@ -1,3 +1,4 @@
+import sys
 import threading
 from socketserver import ThreadingMixIn, TCPServer, BaseRequestHandler
 
@@ -17,7 +18,7 @@ class ReplRequestHandler(BaseRequestHandler):
     session = None
 
     def handle(self):
-        print("New client")
+        print("New client", file=sys.stderr)
         buf = b""
         while True:
             try:
@@ -31,7 +32,7 @@ class ReplRequestHandler(BaseRequestHandler):
                 msg, rest = bencode.decode(buf)
                 buf = rest
             except Exception as e:
-                print(e)
+                print(e, file=sys.stderr)
                 continue
 
             if self.session is None:
@@ -40,4 +41,4 @@ class ReplRequestHandler(BaseRequestHandler):
                     self.session = session.Session()
 
             self.session.handle(msg, self.request)
-        print("Client gone")
+        print("Client gone", file=sys.stderr)

@@ -8,7 +8,6 @@
         (catch [e OSError]
           (setv port (inc port)))
         (else
-          (print (.format "Listening on {}" port))
+          (print (.format "Listening on {}" port) :file sys.stderr)
           (while True
             (time.sleep 1)))))))
-
