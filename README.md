@@ -20,7 +20,7 @@ printed on start.
 
 Missing features
 ----------------
-* `:Require[!]` does not yet work. Use `cpp` and `cqp` to evaluate code.
+* `:Require[!]` does not yet work. Use `:%Eval` to evaluate complete files.
 * fireplace is not automatically loaded when editing Hy files. You need to set
   the file type to `clojure` manually.
 * fireplace uses a lot of clojure-specific pieces of code. Most of these could
