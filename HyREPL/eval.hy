@@ -1,4 +1,4 @@
-(import imp sys [threading [Thread]] traceback [io [StringIO]] [queue [Queue]])
+(import types sys [threading [Thread]] traceback [io [StringIO]] [queue [Queue]])
 (import
   [hy.importer [ast-compile hy-eval]]
   [hy.lex [tokenize]])
@@ -21,7 +21,7 @@
 
 (defclass HyREPL [Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
-  [[mod (imp.new-module "__main__")]
+  [[mod (types.ModuleType "__main__")]
    [--init--
      (fn [self msg session writer]
        (.--init-- (super))
