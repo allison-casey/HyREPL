@@ -1,6 +1,9 @@
 HyREPL 
 ======
-  
+
+[![asciicast](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4.png)](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4)
+
+
 Experimental! 
 =============
 Requires Python3.  
