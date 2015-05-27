@@ -87,23 +87,23 @@
 
 
 (defn test-stdout-eval []
-    "stdout eval
-    Example output from the server:
-        [{'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4', 'ns': 'Hy', 'value': 'None'}, 
-         {'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4', 'out': 'Hello World\n'}, 
-         {'status': ['done'], 'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4'}]
-    "
-    (let [[stop (start-server)]
-          [code {"op" "eval" "code" "(print \"Hello World\")"}]
-          [ret (soc-send code)]
-          [(, value out status) ret]]
-      (stop)
-      (assert-multi
-        (= (len ret) 3)
-        (= (. value ["value"]) "None")
-        (= (. out ["out"]) "Hello World\n")
-        (in "done" (. status ["status"]))
-        (= (. value ["session"]) (. out ["session"]) (. status ["session"])))))
+  "stdout eval
+  Example output from the server:
+  [{'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4', 'ns': 'Hy', 'value': 'None'},
+               {'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4', 'out': 'Hello World\n'},
+               {'status': ['done'], 'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4'}]
+  "
+  (let [[stop (start-server)]
+        [code {"op" "eval" "code" "(print \"Hello World\")"}]
+        [ret (soc-send code)]
+        [(, value out status) ret]]
+    (stop)
+    (assert-multi
+      (= (len ret) 3)
+      (= (. value ["value"]) "None")
+      (= (. out ["out"]) "Hello World\n")
+      (in "done" (. status ["status"]))
+      (= (. value ["session"]) (. out ["session"]) (. status ["session"])))))
 
 
 (defn stdin-send [code my-queue]
@@ -118,8 +118,8 @@
     Bad hack. But it works.
 
     Example output from the server:
-        [{'status': ['need-input'], 'session': 'ec100813-8e76-4d69-9116-6460c1db4428'}, 
-         {'session': 'ec100813-8e76-4d69-9116-6460c1db4428', 'ns': 'Hy', 'value': 'test'}, 
+        [{'status': ['need-input'], 'session': 'ec100813-8e76-4d69-9116-6460c1db4428'},
+         {'session': 'ec100813-8e76-4d69-9116-6460c1db4428', 'ns': 'Hy', 'value': 'test'},
          {'status': ['done'], 'session': 'ec100813-8e76-4d69-9116-6460c1db4428'}]
     "
     (let [[stop (start-server)]
