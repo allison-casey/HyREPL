@@ -32,6 +32,11 @@
   (w {"value" "nil"})
   (w {"status" ["done"]}))
 
+(defn work-around-fake [session msg w]
+  (w {"out" "success"})
+  (w {"value" "[\":\" nil]"})
+  (w {"status" ["done"]}))
+
 (def hints {
   (+ "(do (println \"success\") (symbol (str (System/getProperty \"path.separator\") "
     "(System/getProperty \"java.class.path\"))))")
@@ -43,4 +48,6 @@
   "(*1 1)" work-around-last
   "(*2 2)" work-around-last
   "(*3 3)" work-around-last
+  "[(System/getProperty \"path.separator\") (System/getProperty \"fake.class.path\")]"
+  work-around-fake
   })
