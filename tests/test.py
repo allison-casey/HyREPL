@@ -14,7 +14,10 @@ from HyREPL.server import ReplRequestHandler
 sock = "/tmp/HyREPL-test"
 class TestServer(ThreadingMixIn, UnixStreamServer): pass
 def start_server():
-    os.unlink(sock)
+    try:
+        os.unlink(sock)
+    except FileNotFoundError:
+        pass
     s = TestServer(sock, ReplRequestHandler)
     t = threading.Thread(target=s.serve_forever)
     t.daemon = True
