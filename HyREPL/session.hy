@@ -28,7 +28,10 @@
        (assert (in "id" msg))
        (assoc msg "session" self.uuid)
        (print "out:" msg :file sys.stderr)
-       (.sendall transport (bencode.encode msg)))]
+       (try
+         (.sendall transport (bencode.encode msg))
+         (except [e OSError]
+           (print (.format "Client gone: {}" e) :file sys.stderr))))]
    [handle
      (fn [self msg transport]
        (print "in:" msg :file sys.stderr)
