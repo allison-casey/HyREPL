@@ -1,7 +1,8 @@
-(import imp sys [threading [Thread]] traceback [io [StringIO]] [queue [Queue]])
+(import types sys [threading [Thread]] traceback [io [StringIO]] [queue [Queue]])
 (import
   [hy.importer [ast-compile hy-eval]]
-  [hy.lex [tokenize]])
+  [hy.lex [tokenize]]
+  [hy.lex.exceptions [LexException]])
 
 
 (defclass HyReplSTDIN [Queue]
@@ -21,7 +22,7 @@
 
 (defclass HyREPL [Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
-  [[mod (imp.new-module "__main__")]
+  [[mod (types.ModuleType "__main__")] ; TODO: make this per-session instead of global?
    [--init--
      (fn [self msg session writer]
        (.--init-- (super))
@@ -36,7 +37,8 @@
          (try
            (setv self.tokens (tokenize code))
            (catch [e Exception]
-             (.format-excp self (sys.exc-info)))
+             (.format-excp self (sys.exc-info))
+             (self.writer {"status" ["done"] "id" (.get self.msg "id")}))
            (else
              ; TODO: add 'eval_msg' updates too the current session
              (let [[oldout sys.stdout]]
@@ -65,4 +67,8 @@
                       "ex" (. exc-type --name--)
                       "root-ex" (. exc-type --name--)
                       "id" (.get self.msg "id")})
-         (self.writer {"err" (str exc-value) "id" (.get self.msg "id")})))]])
+         (when (instance? LexException exc-value)
+           (when (is exc-value.source None)
+             (setv exc-value.source ""))
+           (setv exc-value (.format "LexException: {}" exc-value.message)))
+         (self.writer {"err" (.strip (str exc-value)) "id" (.get self.msg "id")})))]])
