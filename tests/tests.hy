@@ -1,5 +1,7 @@
-(import sys os threading socket queue time)
-(import [socketserver [ThreadingMixIn UnixStreamServer]])
+(import os queue socket sys threading time)
+(import
+  [io [StringIO]]
+  [socketserver [ThreadingMixIn UnixStreamServer]])
 
 (import [HyREPL.bencode [encode decode decode-multiple]])
 (import [HyREPL.server [ReplRequestHandler]])
@@ -12,19 +14,30 @@
     `(do ~s)))
 
 
-(defclass TestServer [ThreadingMixIn UnixStreamServer])
 (def sock "/tmp/HyREPL-test")
-(defn start-server []
-  (try
-    (os.unlink sock)
-    (except [e FileNotFoundError]))
-  (let [[s (TestServer sock ReplRequestHandler)]
-        [t (threading.Thread :target s.serve-forever)]]
-    (setv t.daemon True)
-    (.start t)
-    (fn []
-      (.shutdown s)
-      (.join t))))
+(defclass ReplUnixStreamServer [ThreadingMixIn UnixStreamServer])
+(defclass TestServer []
+  [[--init--
+     (fn [self]
+       (try
+         (os.unlink sock)
+         (except [e FileNotFoundError]))
+       (setv self.o sys.stderr)
+       (setv self.s (ReplUnixStreamServer sock ReplRequestHandler))
+       (setv self.t (threading.Thread :target (. self s serve-forever)))
+       (setv (. self t daemon) True)
+       (setv sys.stderr (StringIO))
+       None)]
+   [--enter--
+     (fn [self]
+       (.start self.t)
+       self)]
+   [--exit--
+     (fn [self &rest args]
+       (.shutdown self.s)
+       (setv sys.stderr self.o)
+       (.join self.t))]])
+
 
 (defn soc-send [message &optional [return-reply True]]
   (let [[s (socket.socket :family socket.AF-UNIX)]
@@ -74,16 +87,15 @@
   [{'session': '0361c419-ef89-4a86-ae1a-48388be56041', 'ns': 'Hy', 'value': '4'}, 
                {'status': ['done'], 'session': '0361c419-ef89-4a86-ae1a-48388be56041'}]
   "
-  (let [[stop (start-server)]
-        [code {"op" "eval" "code" "(+ 2 2)"}]
-        [ret (soc-send code)]
-        [(, value status) ret]]
-    (stop)
-    (assert-multi
-      (= (len ret) 2)
-      (= (. value ["value"]) "4")
-      (in "done" (. status ["status"]))
-      (= (. value ["session"]) (. status ["session"])))))
+  (with [[(TestServer)]]
+        (let [[code {"op" "eval" "code" "(+ 2 2)"}]
+              [ret (soc-send code)]
+              [(, value status) ret]]
+          (assert-multi
+            (= (len ret) 2)
+            (= (. value ["value"]) "4")
+            (in "done" (. status ["status"]))
+            (= (. value ["session"]) (. status ["session"]))))))
 
 
 (defn test-stdout-eval []
@@ -93,17 +105,16 @@
                {'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4', 'out': 'Hello World\n'},
                {'status': ['done'], 'session': '2d6b48d8-4a3e-49a6-9131-3321a11f70d4'}]
   "
-  (let [[stop (start-server)]
-        [code {"op" "eval" "code" "(print \"Hello World\")"}]
-        [ret (soc-send code)]
-        [(, value out status) ret]]
-    (stop)
-    (assert-multi
-      (= (len ret) 3)
-      (= (. value ["value"]) "None")
-      (= (. out ["out"]) "Hello World\n")
-      (in "done" (. status ["status"]))
-      (= (. value ["session"]) (. out ["session"]) (. status ["session"])))))
+  (with [[(TestServer)]]
+        (let [[code {"op" "eval" "code" "(print \"Hello World\")"}]
+              [ret (soc-send code)]
+              [(, value out status) ret]]
+          (assert-multi
+            (= (len ret) 3)
+            (= (. value ["value"]) "None")
+            (= (. out ["out"]) "Hello World\n")
+            (in "done" (. status ["status"]))
+            (= (. value ["session"]) (. out ["session"]) (. status ["session"]))))))
 
 
 (defn stdin-send [code my-queue]
@@ -122,25 +133,24 @@
          {'session': 'ec100813-8e76-4d69-9116-6460c1db4428', 'ns': 'Hy', 'value': 'test'},
          {'status': ['done'], 'session': 'ec100813-8e76-4d69-9116-6460c1db4428'}]
     "
-    (let [[stop (start-server)]
-          [my-queue (queue.Queue)]
-          [code {"op" "eval" "code" "(def a (input))"}]
-          [t (threading.Thread :target stdin-send :args [code my-queue])]]
-      (.start t)
-      ; Might encounter a race condition where 
-      ; we send stdin before we eval (input)
-      (time.sleep 0.5)
+    (with [[(TestServer)]]
+          (let [[my-queue (queue.Queue)]
+                [code {"op" "eval" "code" "(def a (input))"}]
+                [t (threading.Thread :target stdin-send :args [code my-queue])]]
+            (.start t)
+            ; Might encounter a race condition where
+            ; we send stdin before we eval (input)
+            (time.sleep 0.5)
 
-      (soc-send {"op" "stdin" "value" "test"} :return-reply False)
+            (soc-send {"op" "stdin" "value" "test"} :return-reply False)
 
-      (.join t)
+            (.join t)
 
-      (let [[ret (.get my-queue)]
-            [(, input-request value status) ret]]
-        (stop)
-        (assert-multi
-          (= (len ret) 3)
-          (= (. value ["value"]) "test")
-          (= (. input-request ["status"]) ["need-input"])
-          (in "done" (. status ["status"]))
-          (= (. value ["session"]) (. input-request ["session"]) (. status ["session"]))))))
+            (let [[ret (.get my-queue)]
+                  [(, input-request value status) ret]]
+              (assert-multi
+                (= (len ret) 3)
+                (= (. value ["value"]) "test")
+                (= (. input-request ["status"]) ["need-input"])
+                (in "done" (. status ["status"]))
+                (= (. value ["session"]) (. input-request ["session"]) (. status ["session"])))))))
