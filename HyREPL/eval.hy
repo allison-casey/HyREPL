@@ -22,7 +22,7 @@
 
 (defclass HyREPL [Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
-  [[mod (types.ModuleType "__main__")]
+  [[mod (types.ModuleType "__main__")] ; TODO: make this per-session instead of global?
    [--init--
      (fn [self msg session writer]
        (.--init-- (super))
