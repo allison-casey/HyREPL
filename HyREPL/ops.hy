@@ -28,6 +28,11 @@
       (when (in op args)
         (setv r f)
         (break)))
+    (when (is None r)
+      (setv r
+        (fn [s m t]
+          (print (.format "Unknown op {} called" op) :file sys.stderr)
+          (.write s {"status" ["done"] "id" (.get m "id")} t))))
     r))
 
 
