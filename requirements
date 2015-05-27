@@ -1,4 +1,2 @@
-asyncio
-nrepl-python-client
 nose
 hy
