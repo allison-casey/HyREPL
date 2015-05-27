@@ -50,7 +50,7 @@
     r))
 
 
-(defn test_bencode []
+(defn test-bencode []
   (let [[d {"foo" 42 "spam" [1 2 "a"]}]]
     (assert (= d (-> d encode decode first))))
 
