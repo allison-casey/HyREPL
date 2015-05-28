@@ -9,7 +9,7 @@
 ;
 (import sys threading)
 (import
-  [HyREPL.eval [HyREPL]]
+  [HyREPL.eval [HyREPL :as repl]]
   [HyREPL.workarounds [hints work-around-it]])
 
 
@@ -40,7 +40,7 @@
   (defn eval-expr [session msg transport]
     (if (in (.get msg "code") (.keys hints))
       (work-around-it session msg transport)
-      (let [[d (HyREPL msg session (fn [x] (.write session x transport)))]]
+      (let [[d (repl msg session (fn [x] (.write session x transport)))]]
         (.start d)))))
 
 
