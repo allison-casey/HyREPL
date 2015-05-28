@@ -13,77 +13,104 @@
   [HyREPL.workarounds [hints work-around-it]])
 
 
-(def descriptions {})
-
-
-(defn set-description [handles &optional requires expects]
-  (fn [f]
-    ; TODO: make this do more useful things
-    (assoc descriptions (tuple (.keys handles)) f)))
+(def ops {})
+(defmacro defop [name args desc &rest body]
+  (if-not (instance? HySymbol name)
+    (macro-error name "Name must be a symbol."))
+  (if-not (instance? hy.models.list.HyList args)
+    (macro-error args "Arguments must be a list."))
+  (if-not (instance? hy.models.dict.HyDict desc)
+    (macro-error desc "Description must be a dictionary."))
+  ; TODO: verify messages: all req'd keys present?
+  (let [[n (.replace (str name) "_" "-")]
+        [f `(fn ~args ~@body)]
+        [o {:f f :desc desc}]]
+    `(assoc ops ~n ~o)))
 
 
 (defn find-op [op]
-  (let [r]
-    (for [[args f] (.items descriptions)]
-      (when (in op args)
-        (setv r f)
-        (break)))
-    (when (is None r)
-      (setv r
-        (fn [s m t]
-          (print (.format "Unknown op {} called" op) :file sys.stderr)
-          (.write s {"status" ["done"] "id" (.get m "id")} t))))
-    r))
+  (if (in op ops)
+    (:f (get ops op))
+    (fn [s m t]
+      (print (.format "Unknown op {} called" op) :file sys.stderr)
+      (.write s {"status" ["done"] "id" (.get m "id")} t))))
 
 
-(with-decorator (set-description {"eval" {}})
-  (defn eval-expr [session msg transport]
-    (if (in (.get msg "code") (.keys hints))
-      (work-around-it session msg transport)
-      (let [[d (repl msg session (fn [x] (.write session x transport)))]]
-        (.start d)))))
+(defop eval [session msg transport]
+       {"doc" "Evaluates code."
+       "requires" {"code" "The code to be evaluated"
+                  "session" "The ID of the session in which the code will be evaluated"}
+       "optional" {"id" "An opaque message ID that will be included in the response"}
+       "returns" {"ex" "Type of the exception thrown, if any. If present, `value` will be absent."
+                 "ns" "The current namespace after the evaluation of `code`. For HyREPL, this will always be `Hy`."
+                 "root-ex" "Same as `ex`"
+                 "values" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
+       (if (in (get msg "code") (.keys hints))
+         (work-around-it session msg transport)
+         (.start
+           (repl msg session
+                 (fn [x] (.write session x transport))))))
 
 
-(with-decorator (set-description {"load-file" {}})
-  (defn load-file [session msg transport]
-    (let [[code (get (.split (get msg "file") " " 2) 2)]]
-      (print code :file sys.stderr)
-      (assoc msg "code" code)
-      (del (get msg "file"))
-      ((find-op "eval") session msg transport))))
+(defop load-file [session msg transport]
+       {"doc" "Loads a body of code. Delegates to `eval`"
+       "requires" {"file" "full body of code"}
+       "optional" {"file-name" "name of the source file, for example for exceptions"
+                  "file-path" "path to the source file"}
+       "returns" (get (:desc (get ops "eval")) "returns")}
+       (let [[code (-> (get msg "file")
+                     (.split " " 2)
+                     (get 2))]]
+         (print (.strip code) :file sys.stderr)
+         (assoc msg "code" code)
+         (del (get msg "file"))
+         ((find-op "eval") session msg transport)))
 
 
-(with-decorator (set-description {"clone" {}})
-  (defn clone-session [session msg transport]
-    (import [HyREPL.session [Session]]) ; Imported here to avoid circular dependency
-    (let [[s (Session)]] ; TODO: actual cloning: globals dictionary
-      (.write session {"status" ["done"] "id" (.get msg "id") "new-session" (str s)} transport))))
+(defop clone [session msg transport]
+       {"doc" "Clones a session"
+       "requires" {}
+       "optional" {"session" "The session to be cloned. If this is left out, the current session is cloned"}
+       "returns" {"new-session" "The ID of the new session"}}
+       (import [HyREPL.session [Session]]) ; Imported here to avoid circ. dependency
+       (let [[s (Session)]]
+         (.write session {"status" ["done"] "id" (.get msg "id") "new-session" (str s)} transport)))
 
 
-(with-decorator (set-description {"close" {}})
-  (defn close-session [session msg transport]
-    (import [HyREPL.session [sessions]]) ; Imported here to avoid circular dependency
-    (try
-      (del (get sessions (.get msg "session" "")))
-      (catch [e KeyError]))
-    (.close transport)))
+(defop close [session msg transport]
+       {"doc" "Closes the specified session"
+       "requires" {"session" "The session to close"}
+       "optional" {}
+       "returns" {}}
+       (import [HyREPL.session [sessions]]) ; Imported here to avoid circ. dependency
+       (try
+         (del (get sessions (.get msg "session" "")))
+         (catch [e KeyError]))
+       (.close transport))
 
 
-(with-decorator (set-description {"describe" {}})
-  (defn describe [session msg transport]
-    (.write session
-            {"status" ["done"]
-            "id" (.get msg "id")
-            "versions" { "nrepl" {"major" 2 "minor" 1 }} ; XXX: java and clojure versions?
-            "ops" {} ; XXX
-            "session" session.uuid}
-            transport)))
+(defop describe [session msg transport]
+       {"doc" "Describe available commands"
+       "requires" {}
+       "optional" {"verbose?" "True if more verbose information is requested"}
+       "returns" {"aux" "Map of auxiliary data"
+                 "ops" "Map of operations supported by this nREPL server"
+                 "versions" "Map containing version maps, for example of the nREPL protocol supported by this server"}}
+       ; TODO: don't ignore verbose argument
+       ; TODO: more versions: Python, Hy
+       (.write session
+               {"status" ["done"]
+               "id" (.get msg "id")
+               "versions" { "nrepl" {"major" 2 "minor" 1 }} ; XXX: java and clojure versions?
+               "ops" (dict-comp k (:desc v) [(, k v) (.items ops)])
+               "session" session.uuid}
+               transport))
 
 
-(with-decorator (set-description
-                  {"stdin" {"doc" "bla" "requires" "stdin" "optional" {} "returns" {"status" "\"need-input\" if input is needed"}}}
-                  (, "session")
-                  (, "eval"))
-  (defn add-stdin [session msg transport]
-    (.put sys.stdin (get msg "value"))
-    (.task-done sys.stdin)))
+(defop stdin [session msg transport]
+       {"doc" "Feeds value to stdin"
+       "requires" { "value" "value to feed in" }
+       "optional" {}
+       "returns" {"status" "\"need-input\" if more input is needed"}}
+       (.put sys.stdin (get msg "value"))
+       (.task-done sys.stdin))
