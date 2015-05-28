@@ -6,10 +6,15 @@ HyREPL
 
 Experimental! 
 =============
-Requires Python3.  
-  
-Install  
-`pip install -r requirements`  
+Requires Python3.
+
+To install, run
+
+    pip install -r requirements
+
+Then set your `PYTHONPATH` to include the path to HyREPL:
+
+    export PYTHONPATH=~/src/HyREPL
 
 To run the tests, simply execute `nosetests-3.4 -v`. The tests create (and bind
 to) a socket at `/tmp/HyREPL-test`.
@@ -17,9 +22,9 @@ to) a socket at `/tmp/HyREPL-test`.
 Using HyREPL with fireplace
 ===========================
 Open a Hy file and set the file type to `clojure`: `set filetype=clojure`. Then
-run `main.hy` in your target directory. Connect vim to the REPL with `:Connect`.
-Use `nrepl` as the protocol, `localhost` as the host and the port number HyREPL
-printed on start.
+run `hy -m HyREPL.server` in your target directory.  Connect vim to the REPL
+with `:Connect`.  Use `nrepl` as the protocol, `localhost` as the host and the
+port number HyREPL printed on start.
 
 Missing features
 ----------------
