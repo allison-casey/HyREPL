@@ -1,6 +1,7 @@
 (import
   sys
   threading
+  time
   [socketserver [ThreadingMixIn TCPServer BaseRequestHandler]])
 
 (import [HyREPL [bencode session]])
@@ -37,9 +38,23 @@
            (.handle self.session (get m 0) self.request))
          (print "Client gone" :file sys.stderr)))]])
 
+
 (defn start-server [ip port]
   (let [[s (ReplServer (, ip port) ReplRequestHandler)]
         [t (threading.Thread :target s.serve-forever)]]
     (setv t.daemon True)
     (.start t)
     (, t s)))
+
+
+(defmain [&rest args]
+  (let [[port 1337]]
+    (while True
+      (try
+        (start-server "127.0.0.1" port)
+        (catch [e OSError]
+          (setv port (inc port)))
+        (else
+          (print (.format "Listening on {}" port) :file sys.stderr)
+          (while True
+            (time.sleep 1)))))))
