@@ -6,6 +6,7 @@
 (import [HyREPL.bencode [encode decode decode-multiple]])
 (import [HyREPL.server [ReplRequestHandler]])
 
+(require HyREPL.ops) ; for `defop`
 
 (defreader b [expr] `(bytes ~expr "utf-8"))
 
@@ -154,3 +155,29 @@
                 (= (. input-request ["status"]) ["need-input"])
                 (in "done" (. status ["status"]))
                 (= (. value ["session"]) (. input-request ["session"]) (. status ["session"])))))))
+
+(defn test-defop-success []
+  (def ops {})
+  (defop o1 [] {})
+  (defop o2 [a] {})
+  (defop o3 [] {"doc" "I'm a docstring!"})
+  (assert-multi
+    (in "o1" ops)
+    (in "o2" ops)
+    (in "o3" ops)
+    (= (:desc (get ops "o3")) {"doc" "I'm a docstring!"})))
+
+(defmacro macroexpand-multi-assert-fail [&rest macros]
+  (let [[s (list-comp `(try
+                         (macroexpand ~m)
+                         (except [e hy.errors.HyMacroExpansionError])
+                         (else
+                           (assert False (.format "Compiling {} should have failed" ~m))))
+             [m macros])]]
+  `(do ~s)))
+
+(defn test-defop-fail []
+  (macroexpand-multi-assert-fail
+    '(defop "yes" [] {})
+    '(defop op1 "no" {})
+    '(defop op1 [] "maybe")))
