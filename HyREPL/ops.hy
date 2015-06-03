@@ -7,9 +7,6 @@
 ;; - eval
 
 (import sys)
-(import
-  [HyREPL.eval [HyREPL :as repl]]
-  [HyREPL.workarounds [hints work-around-it]])
 
 
 (def ops {})
@@ -33,37 +30,6 @@
     (fn [s m t]
       (print (.format "Unknown op {} called" op) :file sys.stderr)
       (.write s {"status" ["done"] "id" (.get m "id")} t))))
-
-
-(defop eval [session msg transport]
-       {"doc" "Evaluates code."
-       "requires" {"code" "The code to be evaluated"
-                  "session" "The ID of the session in which the code will be evaluated"}
-       "optional" {"id" "An opaque message ID that will be included in the response"}
-       "returns" {"ex" "Type of the exception thrown, if any. If present, `value` will be absent."
-                 "ns" "The current namespace after the evaluation of `code`. For HyREPL, this will always be `Hy`."
-                 "root-ex" "Same as `ex`"
-                 "values" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
-       (if (in (get msg "code") (.keys hints))
-         (work-around-it session msg transport)
-         (.start
-           (repl msg session
-                 (fn [x] (.write session x transport))))))
-
-
-(defop load-file [session msg transport]
-       {"doc" "Loads a body of code. Delegates to `eval`"
-       "requires" {"file" "full body of code"}
-       "optional" {"file-name" "name of the source file, for example for exceptions"
-                  "file-path" "path to the source file"}
-       "returns" (get (:desc (get ops "eval")) "returns")}
-       (let [[code (-> (get msg "file")
-                     (.split " " 2)
-                     (get 2))]]
-         (print (.strip code) :file sys.stderr)
-         (assoc msg "code" code)
-         (del (get msg "file"))
-         ((find-op "eval") session msg transport)))
 
 
 (defop clone [session msg transport]
@@ -93,6 +59,7 @@
    "minor" minor
    "incremental" incremental
    "version-string" (.join "." (map str [major minor incremental]))})
+
 
 (defop describe [session msg transport]
        {"doc" "Describe available commands"
