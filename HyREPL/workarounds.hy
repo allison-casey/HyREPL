@@ -52,7 +52,8 @@
   (w {"value" "\"Hy\""})
   (w {"status" ["done"]}))
 
-(def hints {
+(def hints
+  { ; Workarounds for Fireplace
   (+ "(do (println \"success\") (symbol (str (System/getProperty \"path.separator\") "
     "(System/getProperty \"java.class.path\"))))")
   work-around-init-1
