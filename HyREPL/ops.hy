@@ -5,8 +5,8 @@
 ;; Incomplete ops:
 ;; - load-file (file name not handled)
 ;; - eval
-;
-(import sys threading)
+
+(import sys)
 (import
   [HyREPL.eval [HyREPL :as repl]]
   [HyREPL.workarounds [hints work-around-it]])
