@@ -16,6 +16,16 @@
   (w {"value" "[\"/\" \":\"]" "ns" "Hy"})
   (w {"status" ["done"]}))
 
+(defn work-around-init-3 [s m w]
+  (w {"out" "success"})
+  (w {"value" "None"})
+  (w {"status" ["done"]}))
+
+(defn work-around-init-4 [s m w]
+  (w {"out" "success"})
+  (w {"value" "\"not installed\""})
+  (w {"status" ["done"]}))
+
 (defn work-around-traceback [session msg w]
   (w {"out" "success"})
   (let [[items []]]
@@ -55,6 +65,12 @@
   "(*3 3)" work-around-last
   "[(System/getProperty \"path.separator\") (System/getProperty \"fake.class.path\")]"
   work-around-fake
+
+   ; Workarounds for cider
   "(str *ns*)"
   work-around-namespace
+  "(when (clojure.core/resolve 'clojure.main/repl-requires)\n      (clojure.core/map clojure.core/require clojure.main/repl-requires))"
+  work-around-init-3
+   "(try\n      (require \'cider.nrepl.version)\n      (:version-string @(resolve \'cider.nrepl.version/version))\n    (catch Throwable _ \"not installed\"))"
+   work-around-init-4
   })
