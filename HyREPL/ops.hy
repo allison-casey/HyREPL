@@ -89,6 +89,12 @@
        (.close transport))
 
 
+(defn make-version [&optional [major 0] [minor 0] [incremental 0]]
+  {"major" major
+   "minor" minor
+   "incremental" incremental
+   "version-string" (.join "." (map str [major minor incremental]))})
+
 (defop describe [session msg transport]
        {"doc" "Describe available commands"
        "requires" {}
@@ -101,7 +107,9 @@
        (.write session
                {"status" ["done"]
                "id" (.get msg "id")
-               "versions" { "nrepl" {"major" 2 "minor" 1 }} ; XXX: java and clojure versions?
+               "versions" {"nrepl" (make-version 0 2 7)
+                           "java" (make-version)
+                           "clojure" (make-version)}
                "ops" (dict-comp k (:desc v) [(, k v) (.items ops)])
                "session" session.uuid}
                transport))
