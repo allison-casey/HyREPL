@@ -1,4 +1,4 @@
-(import sys [uuid [uuid4]])
+(import sys [uuid [uuid4]] [threading [Lock]])
 (import
   [HyREPL [bencode]]
   [HyREPL.ops [find-op]])
@@ -10,12 +10,13 @@
 (defclass Session [object]
   [[status ""]
    [eval-id ""]
-   [eval-msg ""]
+   [repl None]
    [last-traceback None]
    [--init--
      (fn [self]
        (setv self.uuid (str (uuid4)))
        (assoc sessions self.uuid self)
+       (setv self.lock (Lock))
        None)]
    [--str--
      (fn [self]

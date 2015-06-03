@@ -1,4 +1,6 @@
-(import types sys [threading [Thread]] traceback [io [StringIO]] [queue [Queue]])
+(import types sys threading [queue [Queue]] traceback [io [StringIO]])
+(import ctypes)
+
 (import
   [hy.importer [ast-compile hy-eval]]
   [hy.lex [tokenize]]
@@ -13,22 +15,31 @@
 (defclass HyReplSTDIN [Queue]
   ; """This is hack to override sys.stdin."""
   [[--init--
-     (fn [self write msg]
-       (.--init-- (super))
-       (setv self.writer write)
-       (setv self.msg msg)
-       None)]
+    (fn [self write]
+      (.--init-- (super))
+      (setv self.writer write)
+      None)]
    [readline
-     (fn [self]
-       (self.writer {"status" ["need-input"] "id" (.get self.msg "id")})
-       (.join self)
-       (.get self))]])
+    (fn [self]
+      (self.writer {"status" ["need-input"]})
+      (.join self)
+      (.get self))]])
 
 
 (def eval-module (types.ModuleType "__main__")) ; Module context for evaluations
 
 
-(defclass InterruptibleEval [Thread]
+(defn async-raise [tid exc]
+  (let [[res (ctypes.pythonapi.PyThreadState-SetAsyncExc (ctypes.c-long tid) (ctypes.py-object exc))]]
+    (cond
+      [(= res 0) (raise (ValueError (.format "Thread ID does not exist: {}" tid)))]
+      [(> res 1)
+       (do
+         (ctypes.pythonapi.PyThreadState-SetAsyncExc tid 0)
+         (raise (SystemError "PyThreadState-SetAsyncExc failed")))])))
+
+
+(defclass InterruptibleEval [threading.Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
   [[--init--
      (fn [self msg session writer]
@@ -36,11 +47,25 @@
        (setv self.writer writer)
        (setv self.msg msg)
        (setv self.session session)
-       (setv sys.stdin (HyReplSTDIN writer msg))
+       (setv sys.stdin (HyReplSTDIN writer))
+       ; we're locked under self.session.lock, so modification is safe
+       (setv self.session.eval-id (.get msg "id"))
        None)]
+   [raise-exc
+    (fn [self exc]
+      (assert (.isAlive self) "Trying to raise exception on dead thread!")
+      (print threading.-active :file sys.stderr)
+      (for [(, tid tobj) (.items threading.-active)]
+        (when (is tobj self)
+          (async-raise tid exc)
+          (break))))]
+   [terminate
+    (fn [self]
+      (.raise-exc self SystemExit))]
    [run
      (fn [self]
-       (let [[code (get self.msg "code")]]
+       (let [[code (get self.msg "code")]
+             [oldout sys.stdout]]
          (try
            (setv self.tokens (tokenize code))
            (catch [e Exception]
@@ -48,22 +73,21 @@
              (self.writer {"status" ["done"] "id" (.get self.msg "id")}))
            (else
              ; TODO: add 'eval_msg' updates too the current session
-             (let [[oldout sys.stdout]]
-               (for [i self.tokens]
-                 (let [[p (StringIO)]]
-                   (try
-                     (do
-                       (setv sys.stdout (StringIO))
-                       (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
-                     (except [e Exception]
-                       (setv sys.stdout oldout)
-                       (.format-excp self (sys.exc-info)))
-                     (else
-                       (self.writer {"value" (.getvalue p) "ns" (.get self.msg "ns" "Hy") "id" (.get self.msg "id")})
-                       (when (and (= (.getvalue p) "None") (bool (.getvalue sys.stdout)))
-                         (self.writer {"out" (.getvalue sys.stdout) "id" (.get self.msg "id")}))))))
-               (setv sys.stdout oldout)
-               (self.writer {"status" ["done"] "id" (.get self.msg "id")}))))))]
+             (for [i self.tokens]
+               (let [[p (StringIO)]]
+                 (try
+                   (do
+                     (setv sys.stdout (StringIO))
+                     (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
+                   (except [e Exception]
+                     (setv sys.stdout oldout)
+                     (.format-excp self (sys.exc-info)))
+                   (else
+                     (self.writer {"value" (.getvalue p) "ns" (.get self.msg "ns" "Hy")})
+                     (when (and (= (.getvalue p) "None") (bool (.getvalue sys.stdout)))
+                       (self.writer {"out" (.getvalue sys.stdout)}))))))
+             (setv sys.stdout oldout)
+             (self.writer {"status" ["done"]})))))]
    [format-excp
      (fn [self trace]
        (let [[exc-type (first trace)]
@@ -78,7 +102,7 @@
            (when (is exc-value.source None)
              (setv exc-value.source ""))
            (setv exc-value (.format "LexException: {}" exc-value.message)))
-         (self.writer {"err" (.strip (str exc-value)) "id" (.get self.msg "id")})))]])
+         (self.writer {"err" (.strip (str exc-value))})))]])
 
 
 (defop eval [session msg transport]
@@ -92,21 +116,41 @@
                    "values" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
        (if (in (get msg "code") (.keys hints))
          (work-around-it session msg transport)
-         (.start
-           (InterruptibleEval msg session
-                 (fn [x] (.write session x transport))))))
+         (with [session.lock]
+           (when (and (is-not session.repl None) (.is-alive session.repl))
+             (.join session.repl))
+           (setv session.repl
+             (InterruptibleEval msg session
+                                (fn [x]
+                                  (assoc x "id" (.get msg "id"))
+                                  (.write session x transport))))
+           (.start session.repl))))
 
 
 (defop interrupt [session msg transport]
        {"doc" "Interrupt a running eval"
         "requires" {"session" "The session id used to start the eval to be interrupted"}
         "optional" {"interrupt-id" "The ID of the eval to interrupt"}
-        "returns" {"status" "\"interrupted\" if an eval was interrupted, \"session-idle\" if the session is not evaluating code at
-                   the momen, \"interrupt-id-mismatch\" if the session is currently evaluating code with a different ID than the
-                   specified \"interrupt-id\" value"}}
-       (.write session
-               {"status" ["interrupted"]
-                "id" (.get msg "id")}
+        "returns" {"status" "\"interrupted\" if an eval was interrupted, \"session-idle\" if the session is not evaluating code at"
+                   "the moment, \"interrupt-id-mismatch\" if the session is currently evaluating code with a different ID than the"
+                   "specified \"interrupt-id\" value"}}
+       (.write session {"id" (.get msg "id")
+                        "status"
+                        (with [session.lock]
+                          (cond
+                            [(or (is session.repl None) (not (.is-alive session.repl)))
+                             (do
+                               (print session.repl :file sys.stderr)
+                               "session-idle")]
+                            [(!= session.eval-id (.get msg "interrupt-id"))
+                             (do
+                               (print (.format "want: {} have: {}" (.get msg "interrupt-id") session.eval-id) :file sys.stderr)
+                               "interrupt-id-mismatch")]
+                            [True
+                             (do
+                               (.terminate session.repl)
+                               (.join session.repl)
+                               "interrupted")]))}
                transport)
        (.write session
                {"status" ["done"]
