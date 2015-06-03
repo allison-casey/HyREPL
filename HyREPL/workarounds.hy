@@ -39,7 +39,7 @@
 
 (defn work-around-namespace [session msg w]
   (w {"out" "success"})
-  (w {"value" "\"user\""}) ; XXX: use "Hy" instead?
+  (w {"value" "\"Hy\""})
   (w {"status" ["done"]}))
 
 (def hints {
