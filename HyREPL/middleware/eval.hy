@@ -54,7 +54,6 @@
    [raise-exc
     (fn [self exc]
       (assert (.isAlive self) "Trying to raise exception on dead thread!")
-      (print threading.-active :file sys.stderr)
       (for [(, tid tobj) (.items threading.-active)]
         (when (is tobj self)
           (async-raise tid exc)
@@ -139,13 +138,9 @@
                         (with [session.lock]
                           (cond
                             [(or (is session.repl None) (not (.is-alive session.repl)))
-                             (do
-                               (print session.repl :file sys.stderr)
-                               "session-idle")]
+                             "session-idle"]
                             [(!= session.eval-id (.get msg "interrupt-id"))
-                             (do
-                               (print (.format "want: {} have: {}" (.get msg "interrupt-id") session.eval-id) :file sys.stderr)
-                               "interrupt-id-mismatch")]
+                             "interrupt-id-mismatch"]
                             [True
                              (do
                                (.terminate session.repl)
