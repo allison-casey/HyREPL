@@ -6,6 +6,8 @@
 
 (import [HyREPL [bencode session]])
 
+(import [HyREPL.middleware.test])
+
 (defclass ReplServer [ThreadingMixIn TCPServer])
 
 (defclass ReplRequestHandler [BaseRequestHandler]
