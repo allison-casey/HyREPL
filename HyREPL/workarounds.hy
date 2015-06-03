@@ -37,6 +37,11 @@
   (w {"value" "[\":\" nil]"})
   (w {"status" ["done"]}))
 
+(defn work-around-namespace [session msg w]
+  (w {"out" "success"})
+  (w {"value" "\"user\""}) ; XXX: use "Hy" instead?
+  (w {"status" ["done"]}))
+
 (def hints {
   (+ "(do (println \"success\") (symbol (str (System/getProperty \"path.separator\") "
     "(System/getProperty \"java.class.path\"))))")
@@ -50,4 +55,6 @@
   "(*3 3)" work-around-last
   "[(System/getProperty \"path.separator\") (System/getProperty \"fake.class.path\")]"
   work-around-fake
+  "(str *ns*)"
+  work-around-namespace
   })
