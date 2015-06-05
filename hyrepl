@@ -1,3 +1,5 @@
 #!/bin/sh
 
-PYTHONPATH=${PYTHONPATH}:"`dirname $0`" hy "`dirname $0`"/main.hy $@
+# If you followed the setup instructions, HyREPL is in your Python path.
+
+hy -m HyREPL.server $@
