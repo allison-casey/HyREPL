@@ -7,7 +7,7 @@
 (import [HyREPL [bencode session]])
 
 ; TODO: move these includes somewhere else
-(import [HyREPL.middleware [test eval]])
+(import [HyREPL.middleware [test eval complete]])
 
 (defclass ReplServer [ThreadingMixIn TCPServer])
 
