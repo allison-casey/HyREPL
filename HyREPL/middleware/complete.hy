@@ -9,10 +9,12 @@
 
 
 (defn get-names-types [d]
-  (list-comp
-    {:name n
-     :type (str (type (get d n)))}
-    [n (.keys d)]))
+  (sorted
+    (list-comp
+      {:name (.replace n "_" "-")
+       :type (. (type (get d n)) --name--)}
+      [n (filter (fn [x] (instance? str x)) (.keys d))])
+    :key (fn [x] (:name x))))
 
 
 (defn get-completions [sym extra]
