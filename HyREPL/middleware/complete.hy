@@ -4,8 +4,11 @@
 (import sys)
 
 (import hy.macros hy.compiler)
+
 (import [HyREPL.ops [ops]])
 (require HyREPL.ops)
+
+(import [HyREPL.middleware.eval [eval-module]])
 
 
 (defn get-names-types [d]
@@ -19,10 +22,11 @@
 
 (defn get-completions [sym extra]
   (let [[everything []]]
-    (.extend everything (get-names-types (globals)))
+    (.extend everything (get-names-types eval-module.--dict--))
     (.extend everything (get-names-types (locals)))
     (.extend everything (get-names-types --builtins--))
-    ; Only import macros in current namespace
+    (.extend everything (get-names-types (globals)))
+    ;; Only import macros in current namespace
     (.extend everything (get-names-types hy.macros.-hy-macros))
     (for [k (.keys hy.macros.-hy-macros)]
       (.extend everything (get-names-types (get hy.macros.-hy-macros k))))
@@ -30,8 +34,8 @@
     (list-comp
       {"candidate" (:name c)
        "type" (:type c)}
-      [c (sorted (filter (fn [x] (and (instance? str (:name x)) (.startswith (:name x) sym)))
-                   everything) :key (fn [c] (:name c)))])))
+      [c (filter (fn [x] (and (instance? str (:name x)) (in sym (:name x))))
+       everything)])))
 
 
 (defop complete [session msg transport]
