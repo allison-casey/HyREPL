@@ -10,27 +10,22 @@
         (setv rv (get hints w))
         (break)))
     (if (is-not rv None)
-      (fn [s msg t]
-        (.write s {"out" "success" "id" (.get msg "id")} t)
-        (rv s msg (fn [m]
-                    (assoc m "id" (.get msg "id"))
-                    (.write s m t)))
-        (.write s {"status" ["done"] "id" (.get msg "id")} t))
-      None)))
+      rv
+      (fn [s m] (get m "code")))))
 
-(defn work-around-init-1 [session msg w]
-  (w {"value" ":" "ns" "Hy"}))
+(defn work-around-init-1 [session msg]
+  ":")
 
-(defn work-around-init-2 [session msg w]
-  (w {"value" "[\"/\" \":\"]" "ns" "Hy"}))
+(defn work-around-init-2 [session msg]
+  "[\"/\" \":\"]")
 
-(defn work-around-init-3 [s m w]
-  (w {"value" "None"}))
+(defn work-around-init-3 [s m]
+  "\"None\"")
 
-(defn work-around-init-4 [s m w]
-  (w {"value" "\"not installed\""}))
+(defn work-around-init-4 [s m]
+  "\"not installed\"")
 
-(defn work-around-traceback [session msg w]
+(defn work-around-traceback [session msg]
   (let [[items []]]
     (with [session.lock]
       (for [i (traceback.extract_tb session.last_traceback)]
@@ -38,16 +33,19 @@
                                 (get i 2)
                                 (first i)
                                 (second i)))))
-    (w {"value" (+ "[\n\b\n" (.join "\n" items) "\n\b\n nil nil nil]") "ns" (.get msg "ns" "Hy")})))
+    (+ "(quote " "[\n\b\n" (.join "\n" items) "\n\b\n nil nil nil]" ")")))
 
-(defn work-around-last [session msg w]
-  (w {"value" "nil"}))
+(defn work-around-last [session msg]
+  "\"None\"")
 
-(defn work-around-fake [session msg w]
-  (w {"value" "[\":\" nil]"}))
+(defn work-around-fake [session msg]
+  "[\":\" \"None\"]")
 
-(defn work-around-namespace [session msg w]
-  (w {"value" "\"Hy\""}))
+(defn work-around-namespace [session msg]
+  "\"Hy\"")
+
+(defn work-around-macroexpand-all [session msg]
+  (.replace (get msg "code") "clojure.walk/macroexpand-all" "macroexpand" 1))
 
 (def hints
   { ; Workarounds for Fireplace
@@ -58,11 +56,12 @@
   work-around-init-2
   "[(symbol (str \"\\n\\b\" (apply str (interleave (repeat \"\\n\") (map str (.getStackTrace *e)))) \"\\n\\b\\n\")) *3 *2 *1]"
   work-around-traceback
-  "(*1 1)" work-around-last
-  "(*2 2)" work-around-last
-  "(*3 3)" work-around-last
+   (fn [c] (in c ["(*1 1)" "(*2 2)" "(*3 3)"])) work-around-last
   "[(System/getProperty \"path.separator\") (System/getProperty \"fake.class.path\")]"
   work-around-fake
+   (fn [c] (.startswith c "(clojure.walk/macroexpand-all (quote"))
+   work-around-macroexpand-all
+
 
    ; Workarounds for cider
   "(str *ns*)"

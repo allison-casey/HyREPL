@@ -114,17 +114,16 @@
                    "root-ex" "Same as `ex`"
                    "value" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
        (let [[w (get-workaround (get msg "code"))]]
-         (if-not (is w None)
-           (w session msg transport)
-           (with [session.lock]
-             (when (and (is-not session.repl None) (.is-alive session.repl))
-               (.join session.repl))
-             (setv session.repl
-               (InterruptibleEval msg session
-                                  (fn [x]
-                                    (assoc x "id" (.get msg "id"))
-                                    (.write session x transport))))
-             (.start session.repl)))))
+         (assoc msg "code" (w session msg))
+         (with [session.lock]
+           (when (and (is-not session.repl None) (.is-alive session.repl))
+             (.join session.repl))
+           (setv session.repl
+             (InterruptibleEval msg session
+                                (fn [x]
+                                  (assoc x "id" (.get msg "id"))
+                                  (.write session x transport))))
+           (.start session.repl))))
 
 
 (defop interrupt [session msg transport]
