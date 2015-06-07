@@ -7,7 +7,7 @@
   [hy.lex.exceptions [LexException]])
 
 (import
-  [HyREPL.workarounds [hints work-around-it]]
+  [HyREPL.workarounds [get-workaround]]
   [HyREPL.ops [ops find-op]])
 (require HyREPL.ops)
 
@@ -113,17 +113,18 @@
                    "ns" "The current namespace after the evaluation of `code`. For HyREPL, this will always be `Hy`."
                    "root-ex" "Same as `ex`"
                    "values" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
-       (if (in (get msg "code") (.keys hints))
-         (work-around-it session msg transport)
-         (with [session.lock]
-           (when (and (is-not session.repl None) (.is-alive session.repl))
-             (.join session.repl))
-           (setv session.repl
-             (InterruptibleEval msg session
-                                (fn [x]
-                                  (assoc x "id" (.get msg "id"))
-                                  (.write session x transport))))
-           (.start session.repl))))
+       (let [[w (get-workaround (get msg "code"))]]
+         (if-not (is w None)
+           (w session msg transport)
+           (with [session.lock]
+             (when (and (is-not session.repl None) (.is-alive session.repl))
+               (.join session.repl))
+             (setv session.repl
+               (InterruptibleEval msg session
+                                  (fn [x]
+                                    (assoc x "id" (.get msg "id"))
+                                    (.write session x transport))))
+             (.start session.repl)))))
 
 
 (defop interrupt [session msg transport]

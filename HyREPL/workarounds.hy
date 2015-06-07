@@ -1,10 +1,20 @@
 (import traceback)
 
-(defn work-around-it [session msg transport]
-  ((get hints (get msg "code"))
-   session msg (fn [m]
-                 (assoc m "id" (get msg "id"))
-                 (.write session m transport))))
+(defn is-callable [f]
+  (hasattr f "__call__"))
+
+(defn get-workaround [code]
+  (let [rv]
+    (for [w (.keys hints)]
+      (when (or (and (callable? w) (w code)) (= w code))
+        (setv rv (get hints w))
+        (break)))
+    (if (is-not rv None)
+      (fn [s msg t]
+        (rv s msg (fn [m]
+                    (assoc m "id" (get msg "id"))
+                    (.write s m t))))
+      None)))
 
 (defn work-around-init-1 [session msg w]
   (w {"out" "success"})
