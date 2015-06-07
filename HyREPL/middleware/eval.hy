@@ -30,7 +30,8 @@
 
 
 (defn async-raise [tid exc]
-  (let [[res (ctypes.pythonapi.PyThreadState-SetAsyncExc (ctypes.c-long tid) (ctypes.py-object exc))]]
+  (let [[res (ctypes.pythonapi.PyThreadState-SetAsyncExc (ctypes.c-long tid)
+                                                         (ctypes.py-object exc))]]
     (cond
       [(= res 0) (raise (ValueError (.format "Thread ID does not exist: {}" tid)))]
       [(> res 1)
@@ -135,9 +136,12 @@
        {"doc" "Interrupt a running eval"
         "requires" {"session" "The session id used to start the eval to be interrupted"}
         "optional" {"interrupt-id" "The ID of the eval to interrupt"}
-        "returns" {"status" "\"interrupted\" if an eval was interrupted, \"session-idle\" if the session is not evaluating code at"
-                   "the moment, \"interrupt-id-mismatch\" if the session is currently evaluating code with a different ID than the"
-                   "specified \"interrupt-id\" value"}}
+        "returns" {"status" (+ "\"interrupted\" if an eval was interrupted,"
+                               " \"session-idle\" if the session is not"
+                               " evaluating code at  the moment, "
+                               "\"interrupt-id-mismatch\" if the session is"
+                               " currently evaluating code with a different ID"
+                               " than the" "specified \"interrupt-id\" value")}}
        (.write session {"id" (.get msg "id")
                         "status"
                         (with [session.lock]
@@ -160,10 +164,10 @@
 
 (defop "load-file" [session msg transport]
        {"doc" "Loads a body of code. Delegates to `eval`"
-       "requires" {"file" "full body of code"}
-       "optional" {"file-name" "name of the source file, for example for exceptions"
-                  "file-path" "path to the source file"}
-       "returns" (get (:desc (get ops "eval")) "returns")}
+        "requires" {"file" "full body of code"}
+        "optional" {"file-name" "name of the source file, for example for exceptions"
+                    "file-path" "path to the source file"}
+        "returns" (get (:desc (get ops "eval")) "returns")}
        (let [[code (-> (get msg "file")
                      (.split " " 2)
                      (get 2))]]
