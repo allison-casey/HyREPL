@@ -16,9 +16,9 @@
       (when (or (and (callable? w) (w code)) (= w code))
         (setv rv (get workarounds w))
       (break)))
-    (if (is-not rv None)
-      rv
-      (fn [s m] (get m "code")))))
+    (if (none? rv)
+      (fn [s m] (get m "code"))
+      rv)))
 
 ; Workarounds for Fireplace
 (def-workaround (+ "(do (println \"success\") "
