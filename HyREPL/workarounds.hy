@@ -39,11 +39,12 @@
 (defn work-around-traceback [session msg w]
   (w {"out" "success"})
   (let [[items []]]
-    (for [i (traceback.extract_tb session.last_traceback)]
-      (.append items (.format "{}({}:{})"
-                              (get i 2)
-                              (first i)
-                              (second i))))
+    (with [session.lock]
+      (for [i (traceback.extract_tb session.last_traceback)]
+        (.append items (.format "{}({}:{})"
+                                (get i 2)
+                                (first i)
+                                (second i)))))
     (w {"value" (+ "[\n\b\n" (.join "\n" items) "\n\b\n nil nil nil]") "ns" (.get msg "ns" "Hy")}))
   (w {"status" ["done"]}))
 
