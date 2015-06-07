@@ -11,13 +11,22 @@
 (import [HyREPL.middleware.eval [eval-module]])
 
 
-(defn get-names-types [d]
-  (sorted
-    (list-comp
-      {:name (.replace n "_" "-")
-       :type (. (type (get d n)) --name--)}
-      [n (filter (fn [x] (instance? str x)) (.keys d))])
-    :key (fn [x] (:name x))))
+(defn make-type [item override-type]
+  (let [[t (type item)]]
+    (cond
+      [(and (is-not override-type None) (= t (. make-type --class--)))
+       override-type]
+      [(= t (. dir --class--)) "function"]
+      [(= t dict) "namespace"]
+      [True (. t --name--)])))
+
+
+(defn get-names-types [d &optional override-type]
+  (sorted (list-comp
+            {:name (.replace n "_" "-")
+             :type (make-type (get d n) override-type)}
+            [n (filter (fn [x] (instance? str x)) (.keys d))])
+          :key (fn [x] (:name x))))
 
 
 (defn get-completions [sym extra]
@@ -27,10 +36,10 @@
     (.extend everything (get-names-types --builtins--))
     (.extend everything (get-names-types (globals)))
     ;; Only import macros in current namespace
-    (.extend everything (get-names-types hy.macros.-hy-macros))
+    (.extend everything (get-names-types hy.macros.-hy-macros 'macro))
     (for [k (.keys hy.macros.-hy-macros)]
-      (.extend everything (get-names-types (get hy.macros.-hy-macros k))))
-    (.extend everything (get-names-types hy.compiler.-compile-table))
+      (.extend everything (get-names-types (get hy.macros.-hy-macros k) 'macro)))
+    (.extend everything (get-names-types hy.compiler.-compile-table 'macro))
     (list-comp
       {"candidate" (:name c)
        "type" (:type c)}
