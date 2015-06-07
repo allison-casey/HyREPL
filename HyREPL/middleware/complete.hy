@@ -29,8 +29,9 @@
           :key (fn [x] (:name x))))
 
 
-(defn get-completions [sym extra]
-  (let [[everything []]]
+(defn get-completions [sym &optional [extra []]]
+  (let [[everything []]
+        [seen (set)]]
     (.extend everything (get-names-types eval-module.--dict--))
     (.extend everything (get-names-types (locals)))
     (.extend everything (get-names-types --builtins--))
@@ -43,8 +44,13 @@
     (list-comp
       {"candidate" (:name c)
        "type" (:type c)}
-      [c (filter (fn [x] (and (instance? str (:name x)) (in sym (:name x))))
-       everything)])))
+      [c (filter (fn [x]
+                   (if (and (not-in (:name x) seen) (instance? str (:name x)) (in sym (:name x)))
+                     (do
+                       (.add seen (:name x))
+                       True)
+                     False))
+                 everything)])))
 
 
 (defop complete [session msg transport]
