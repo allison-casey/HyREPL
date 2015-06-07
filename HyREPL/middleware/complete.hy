@@ -65,6 +65,3 @@
                         "completions" (get-completions (.get msg "symbol") (.get msg "extra-metadata" []))
                         "status" ["done"]}
                transport))
-
-
-
