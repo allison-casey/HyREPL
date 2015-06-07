@@ -11,33 +11,26 @@
         (break)))
     (if (is-not rv None)
       (fn [s msg t]
+        (.write s {"out" "success" "id" (.get msg "id")} t)
         (rv s msg (fn [m]
-                    (assoc m "id" (get msg "id"))
-                    (.write s m t))))
+                    (assoc m "id" (.get msg "id"))
+                    (.write s m t)))
+        (.write s {"status" ["done"] "id" (.get msg "id")} t))
       None)))
 
 (defn work-around-init-1 [session msg w]
-  (w {"out" "success"})
-  (w {"value" ":" "ns" "Hy"})
-  (w {"status" ["done"]}))
+  (w {"value" ":" "ns" "Hy"}))
 
 (defn work-around-init-2 [session msg w]
-  (w {"out" "success"})
-  (w {"value" "[\"/\" \":\"]" "ns" "Hy"})
-  (w {"status" ["done"]}))
+  (w {"value" "[\"/\" \":\"]" "ns" "Hy"}))
 
 (defn work-around-init-3 [s m w]
-  (w {"out" "success"})
-  (w {"value" "None"})
-  (w {"status" ["done"]}))
+  (w {"value" "None"}))
 
 (defn work-around-init-4 [s m w]
-  (w {"out" "success"})
-  (w {"value" "\"not installed\""})
-  (w {"status" ["done"]}))
+  (w {"value" "\"not installed\""}))
 
 (defn work-around-traceback [session msg w]
-  (w {"out" "success"})
   (let [[items []]]
     (with [session.lock]
       (for [i (traceback.extract_tb session.last_traceback)]
@@ -45,23 +38,16 @@
                                 (get i 2)
                                 (first i)
                                 (second i)))))
-    (w {"value" (+ "[\n\b\n" (.join "\n" items) "\n\b\n nil nil nil]") "ns" (.get msg "ns" "Hy")}))
-  (w {"status" ["done"]}))
+    (w {"value" (+ "[\n\b\n" (.join "\n" items) "\n\b\n nil nil nil]") "ns" (.get msg "ns" "Hy")})))
 
 (defn work-around-last [session msg w]
-  (w {"out" "success"})
-  (w {"value" "nil"})
-  (w {"status" ["done"]}))
+  (w {"value" "nil"}))
 
 (defn work-around-fake [session msg w]
-  (w {"out" "success"})
-  (w {"value" "[\":\" nil]"})
-  (w {"status" ["done"]}))
+  (w {"value" "[\":\" nil]"}))
 
 (defn work-around-namespace [session msg w]
-  (w {"out" "success"})
-  (w {"value" "\"Hy\""})
-  (w {"status" ["done"]}))
+  (w {"value" "\"Hy\""}))
 
 (def hints
   { ; Workarounds for Fireplace
