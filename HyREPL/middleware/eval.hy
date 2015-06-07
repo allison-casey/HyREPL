@@ -112,7 +112,7 @@
         "returns" {"ex" "Type of the exception thrown, if any. If present, `value` will be absent."
                    "ns" "The current namespace after the evaluation of `code`. For HyREPL, this will always be `Hy`."
                    "root-ex" "Same as `ex`"
-                   "values" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
+                   "value" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
        (let [[w (get-workaround (get msg "code"))]]
          (if-not (is w None)
            (w session msg transport)
