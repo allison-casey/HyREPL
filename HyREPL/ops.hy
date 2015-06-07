@@ -23,7 +23,7 @@
 
 
 (defmacro defop [name args desc &rest body]
-  (if-not (instance? HySymbol name)
+  (if-not (instance? (, str HySymbol) name)
     (macro-error name "Name must be a symbol."))
   (if-not (instance? hy.models.list.HyList args)
     (macro-error args "Arguments must be a list."))

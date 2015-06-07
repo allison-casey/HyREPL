@@ -153,7 +153,7 @@
                transport))
 
 
-(defop load-file [session msg transport]
+(defop "load-file" [session msg transport]
        {"doc" "Loads a body of code. Delegates to `eval`"
        "requires" {"file" "full body of code"}
        "optional" {"file-name" "name of the source file, for example for exceptions"
