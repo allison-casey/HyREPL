@@ -22,17 +22,29 @@
 (def ops {"client.init" {:f test :desc {}}})
 
 
-(defmacro defop [name args desc &rest body]
+(defmacro/g! defop [name args desc &rest body]
   (if-not (instance? (, str HySymbol) name)
     (macro-error name "Name must be a symbol."))
   (if-not (instance? hy.models.list.HyList args)
     (macro-error args "Arguments must be a list."))
   (if-not (instance? hy.models.dict.HyDict desc)
     (macro-error desc "Description must be a dictionary."))
-  ; TODO: verify messages: all req'd keys present?
-  (let [[n (str name)]
-        [f `(fn ~args ~@body)]
-        [o {:f f :desc desc}]]
+  (let [[fn-checked
+         `(fn ~args
+            (let [[g!failed False]]
+              (for [g!r (.keys (.get ~desc "requires" {}))]
+                (unless (in g!r (second ~args))
+                  (.write (first ~args)
+                          {"status" ["done"]
+                           "id" (.get (second ~args) "id")
+                           "missing" (str g!r)} (nth ~args 2))
+                  (setv g!failed True)
+                  (break)))
+              (unless g!failed
+                (do
+                  ~@body))))]
+        [n (str name)]
+        [o {:f fn-checked :desc desc}]]
     `(assoc ops ~n ~o)))
 
 
