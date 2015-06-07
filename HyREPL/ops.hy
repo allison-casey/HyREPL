@@ -30,7 +30,7 @@
   (if-not (instance? hy.models.dict.HyDict desc)
     (macro-error desc "Description must be a dictionary."))
   ; TODO: verify messages: all req'd keys present?
-  (let [[n (.replace (str name) "_" "-")]
+  (let [[n (str name)]
         [f `(fn ~args ~@body)]
         [o {:f f :desc desc}]]
     `(assoc ops ~n ~o)))
