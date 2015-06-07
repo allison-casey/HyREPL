@@ -11,10 +11,10 @@
   
   (.write session 
           {"encoding" "edn"
-          "data" "{:remote true, :client-id 155, :name \"localhost:1337\", :dir \"/home/fox/github/hyrepl\", :type \"lein-light-nrepl\", :commands [:editor.eval.clj :editor.clj.doc :editor.cljs.doc :editor.clj.hints :editor.cljs.hints :docs.clj.search :docs.cljs.search :editor.eval.clj.sonar :editor.eval.clj.cancel :editor.eval.cljs :cljs.compile]}"
+          "data" (+ "{:remote true, :client-id "  (str  (get msg "id")) ", :name \"localhost:1337\", :dir \"/home/fox/github/hyrepl\", :type \"lein-light-nrepl\", :commands [:editor.eval.clj :editor.clj.doc :editor.cljs.doc :editor.clj.hints :editor.cljs.hints :docs.clj.search :docs.cljs.search :editor.eval.clj.sonar :editor.eval.clj.cancel :editor.eval.cljs :cljs.compile]}")          
           "op" "client.settings"
           "status" ["done"]
-          "id" (.get msg id)
+          "id" (get msg "id")
           } 
           transport)
   )
