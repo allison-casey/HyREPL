@@ -107,13 +107,17 @@
 (defop eval [session msg transport]
        {"doc" "Evaluates code."
         "requires" {"code" "The code to be evaluated"}
-        "optional" {"session" (+ "The ID of the session in which the code will be evaluated. If absent, a new "
-                                 "session will be generated")
+        "optional" {"session" (+ "The ID of the session in which the code will"
+                                 " be evaluated. If absent, a new session will"
+                                 " be generated")
                     "id" "An opaque message ID that will be included in the response"}
         "returns" {"ex" "Type of the exception thrown, if any. If present, `value` will be absent."
-                   "ns" "The current namespace after the evaluation of `code`. For HyREPL, this will always be `Hy`."
+                   "ns" (+ "The current namespace after the evaluation of `code`."
+                           " For HyREPL, this will always be `Hy`.")
                    "root-ex" "Same as `ex`"
-                   "value" "The values returned by `code` if execution was successful. Absent if `ex` and `root-ex` are present"}}
+                   "value" (+ "The values returned by `code` if execution was "
+                              "successful. Absent if `ex` and `root-ex` are
+                              present")}}
        (let [[w (get-workaround (get msg "code"))]]
          (assoc msg "code" (w session msg))
          (with [session.lock]
