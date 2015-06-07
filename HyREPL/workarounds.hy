@@ -1,3 +1,6 @@
+;; This stuff is really ugly and should be nuked ASAP.
+; It prevents us from having to fork all sorts of clients though, so we got that going for, which is nice.
+
 (import traceback)
 
 (def workarounds {})
