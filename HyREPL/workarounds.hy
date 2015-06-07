@@ -21,16 +21,20 @@
       (fn [s m] (get m "code")))))
 
 ; Workarounds for Fireplace
-(def-workaround (+ "(do (println \"success\") (symbol (str (System/getProperty \"path.separator\") "
+(def-workaround (+ "(do (println \"success\") "
+                   "(symbol (str (System/getProperty \"path.separator\") "
                    "(System/getProperty \"java.class.path\"))))")
                 [session msg]
                 ":")
 
-(def-workaround "[(System/getProperty \"path.separator\") (System/getProperty \"java.class.path\")]"
+(def-workaround (+ "[(System/getProperty \"path.separator\") "
+                   "(System/getProperty \"java.class.path\")]")
                 [session msg]
                 "[\"/\" \":\"]")
 
-(def-workaround "[(symbol (str \"\\n\\b\" (apply str (interleave (repeat \"\\n\") (map str (.getStackTrace *e)))) \"\\n\\b\\n\")) *3 *2 *1]"
+(def-workaround (+ "[(symbol (str \"\\n\\b\" (apply str (interleave "
+                   "(repeat \"\\n\") (map str (.getStackTrace *e)))) "
+                   "\"\\n\\b\\n\")) *3 *2 *1]")
                 [session msg]
                 (let [[items []]]
                   (with [session.lock]
@@ -45,7 +49,8 @@
                 [session msg]
                 "\"None\"")
 
-(def-workaround "[(System/getProperty \"path.separator\") (System/getProperty \"fake.class.path\")]"
+(def-workaround (+ "[(System/getProperty \"path.separator\") "
+                   "(System/getProperty \"fake.class.path\")]")
                 [session msg]
                 "[\":\" \"None\"]")
 
@@ -58,10 +63,14 @@
                 [session msg]
                 "\"Hy\"")
 
-(def-workaround "(when (clojure.core/resolve 'clojure.main/repl-requires)\n      (clojure.core/map clojure.core/require clojure.main/repl-requires))"
+(def-workaround (+ "(when (clojure.core/resolve 'clojure.main/repl-requires)\n "
+                   "     (clojure.core/map clojure.core/require clojure.main/"
+                   "repl-requires))")
                 [session msg]
                 "\"None\"")
 
-(def-workaround "(try\n      (require \'cider.nrepl.version)\n      (:version-string @(resolve \'cider.nrepl.version/version))\n    (catch Throwable _ \"not installed\"))"
+(def-workaround (+ "(try\n      (require \'cider.nrepl.version)\n      "
+                   "(:version-string @(resolve \'cider.nrepl.version/version))"
+                   "\n    (catch Throwable _ \"not installed\"))")
                 [session msg]
                 "\"not installed\"")
