@@ -19,7 +19,7 @@
           transport)
   )
 
-(def ops {"client.init" {:f test}})
+(def ops {"client.init" {:f test :desc {}}})
 
 
 (defmacro defop [name args desc &rest body]
