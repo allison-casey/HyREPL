@@ -3,7 +3,7 @@
 
 (import sys)
 
-(import hy.macros hy.compiler)
+(import hy.macros hy.compiler hy.core.language)
 
 (import [HyREPL.ops [ops]])
 (require HyREPL.ops)
@@ -40,6 +40,7 @@
     (.extend everything (get-names-types hy.macros.-hy-macros 'macro))
     (for [k (.keys hy.macros.-hy-macros)]
       (.extend everything (get-names-types (get hy.macros.-hy-macros k) 'macro)))
+    (.extend everything (get-names-types hy.core.language.--dict-- 'macro))
     (.extend everything (get-names-types hy.compiler.-compile-table 'macro))
     (list-comp
       {"candidate" (:name c)
