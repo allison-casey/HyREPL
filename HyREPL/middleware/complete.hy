@@ -21,39 +21,6 @@
       [True (. t --name--)])))
 
 
-(defn get-names-types [d &optional override-type]
-  (sorted (list-comp
-            {:name (.replace n "_" "-")
-             :type (make-type (get d n) override-type)}
-            [n (filter (fn [x] (instance? str x)) (.keys d))])
-          :key (fn [x] (:name x))))
-
-
-(defn get-completions [sym &optional [extra []]]
-  (let [[everything []]
-        [seen (set)]]
-    (.extend everything (get-names-types eval-module.--dict--))
-    (.extend everything (get-names-types (locals)))
-    (.extend everything (get-names-types --builtins--))
-    (.extend everything (get-names-types (globals)))
-    ;; Only import macros in current namespace
-    (.extend everything (get-names-types hy.macros.-hy-macros 'macro))
-    (for [k (.keys hy.macros.-hy-macros)]
-      (.extend everything (get-names-types (get hy.macros.-hy-macros k) 'macro)))
-    (.extend everything (get-names-types hy.core.language.--dict-- 'macro))
-    (.extend everything (get-names-types hy.compiler.-compile-table 'macro))
-    (list-comp
-      {"candidate" (:name c)
-       "type" (:type c)}
-      [c (filter (fn [x]
-                   (if (and (not-in (:name x) seen) (instance? str (:name x)) (in sym (:name x)))
-                     (do
-                       (.add seen (:name x))
-                       True)
-                     False))
-                 everything)])))
-
-
 (defop complete [session msg transport]
        {"doc" "Returns a list of symbols matching the specified (partial) symbol."
         "requires" {"symbol" "The symbol to look up"
@@ -66,3 +33,53 @@
                         "completions" (get-completions (.get msg "symbol") (.get msg "extra-metadata" []))
                         "status" ["done"]}
                transport))
+
+(defn get-completions-core [stem dict &optional override-type]
+  (if (in "." stem)
+    (let [[s (.split stem "." 1)]
+          [m (.get dict (first s))]]
+      (list-comp
+        {:name (+ (first s) "." (:name x))
+         :type (:type x)}
+        [x (if (none? m)
+             []
+             (get-completions-core (second s)
+                                   (if (hasattr m '--dict--)
+                                     (. m --dict--)
+                                     (. m --class-- --dict--))))]))
+    ; TODO:
+    ; [ ] sort items such that '--foo--' comes after 'foo'
+    (sorted (list-comp
+              {:name (.replace k "_" "-")
+               :type (make-type v override-type)}
+              [(, k v) (.items dict)]
+              (and (instance? str k) (.startswith k stem)))
+            :key (fn [x] (:name x)))))
+
+(defn get-completions [stem &optional extra]
+  ; TODO:
+  ; - [X] macros, compiler defined stuff like list-comp
+  ; - [X] user defined macros
+  ; - [ ] don't ignore extra data
+  ; - [X] deduplication
+  (let [[seen (set)]
+        [f (fn [x]
+             (print x)
+             (if (in (:name x) seen)
+               False
+               (do
+                 (.add seen (:name x))
+                 True)))]]
+    (list-comp
+      {"candidate" (:name c)
+       "type" (:type c)}
+      [c (+ (get-completions-core stem eval-module.--dict--)
+            (get-completions-core stem hy.macros.-hy-macros 'macro)
+            (get-completions-core stem hy.core.language.--dict-- 'macro)
+            (reduce +
+                    (list-comp
+                      (get-completions-core stem n 'macro)
+                      [n (.values hy.macros.-hy-macros)]))
+            (get-completions-core stem hy.compiler.-compile-table 'macro)
+            (get-completions-core stem (get eval-module.--dict-- "__builtins__")))]
+      (f c))))
