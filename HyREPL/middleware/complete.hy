@@ -1,9 +1,11 @@
 ; Inspired by
 ; https://github.com/clojure-emacs/cider-nrepl/blob/master/src/cider/nrepl/middleware/complete.clj
 
-(import sys)
+(import sys re)
 
-(import hy.macros hy.compiler hy.core.language)
+(import
+  hy.macros hy.compiler hy.core.language
+  [hy.completer [Completer]])
 
 (import [HyREPL.ops [ops]])
 (require HyREPL.ops)
@@ -11,7 +13,7 @@
 (import [HyREPL.middleware.eval [eval-module]])
 
 
-(defn make-type [item override-type]
+(defn make-type [item &optional override-type]
   (let [[t (type item)]]
     (cond
       [(and (is-not override-type None) (= t (. make-type --class--)))
@@ -19,6 +21,49 @@
       [(= t (. dir --class--)) "function"]
       [(= t dict) "namespace"]
       [True (. t --name--)])))
+
+
+(defclass TypedCompleter [hy.completer.Completer]
+  [[attr-matches
+    (fn [self text]
+      (let [[m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text)]]
+        (try
+          (do
+            (when (none? m)
+              (raise Exception))
+            (let [[(, expr attr) (.group m 1 3)]
+                  [expr (.replace expr "_" "-")]
+                  [attr (.replace attr "_" "-")]
+                  [obj (eval expr (. self namespace))]
+                  [words (dir obj)]
+                  [n (len attr)]
+                  [matches []]]
+              (for [w words]
+                (when (= (slice w 0 n) attr)
+                  (.append matches
+                           {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
+                            "type" (make-type obj)})))
+              matches))
+          (except [e Exception]
+            []))))]
+   [global-matches
+    (fn [self text]
+      (let [[matches []]]
+        (for [p (. self path) (, k v) (.items p)]
+          (when (instance? str k)
+            (setv k (.replace k "_" "-"))
+            (when (.startswith k text)
+              (.append matches {"candidate" k
+                                "type" (make-type v)}))))
+        matches))]])
+
+
+(defn get-completions [stem &optional extra]
+  ; TODO
+  (let [[comp (TypedCompleter (. eval-module --dict--))]]
+    (cond
+      [(in "." stem) (.attr-matches comp stem)]
+      [True (.global-matches comp stem)])))
 
 
 (defop complete [session msg transport]
@@ -33,53 +78,3 @@
                         "completions" (get-completions (.get msg "symbol") (.get msg "extra-metadata" []))
                         "status" ["done"]}
                transport))
-
-(defn get-completions-core [stem dict &optional override-type]
-  (if (in "." stem)
-    (let [[s (.split stem "." 1)]
-          [m (.get dict (first s))]]
-      (list-comp
-        {:name (+ (first s) "." (:name x))
-         :type (:type x)}
-        [x (if (none? m)
-             []
-             (get-completions-core (second s)
-                                   (if (hasattr m '--dict--)
-                                     (. m --dict--)
-                                     (. m --class-- --dict--))))]))
-    ; TODO:
-    ; [ ] sort items such that '--foo--' comes after 'foo'
-    (sorted (list-comp
-              {:name (.replace k "_" "-")
-               :type (make-type v override-type)}
-              [(, k v) (.items dict)]
-              (and (instance? str k) (.startswith k stem)))
-            :key (fn [x] (:name x)))))
-
-(defn get-completions [stem &optional extra]
-  ; TODO:
-  ; - [X] macros, compiler defined stuff like list-comp
-  ; - [X] user defined macros
-  ; - [ ] don't ignore extra data
-  ; - [X] deduplication
-  (let [[seen (set)]
-        [f (fn [x]
-             (print x)
-             (if (in (:name x) seen)
-               False
-               (do
-                 (.add seen (:name x))
-                 True)))]]
-    (list-comp
-      {"candidate" (:name c)
-       "type" (:type c)}
-      [c (+ (get-completions-core stem eval-module.--dict--)
-            (get-completions-core stem hy.macros.-hy-macros 'macro)
-            (get-completions-core stem hy.core.language.--dict-- 'macro)
-            (reduce +
-                    (list-comp
-                      (get-completions-core stem n 'macro)
-                      [n (.values hy.macros.-hy-macros)]))
-            (get-completions-core stem hy.compiler.-compile-table 'macro)
-            (get-completions-core stem (get eval-module.--dict-- "__builtins__")))]
-      (f c))))
