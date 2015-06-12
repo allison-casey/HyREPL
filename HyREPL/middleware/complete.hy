@@ -59,7 +59,6 @@
 
 
 (defn get-completions [stem &optional extra]
-  ; TODO
   (let [[comp (TypedCompleter (. eval-module --dict--))]]
     (cond
       [(in "." stem) (.attr-matches comp stem)]
