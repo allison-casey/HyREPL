@@ -5,6 +5,7 @@
 
 (import
   hy.macros hy.compiler hy.core.language
+  [hy.models.symbol [HySymbol]]
   [hy.completer [Completer]])
 
 (import [HyREPL.ops [ops]])
@@ -26,26 +27,25 @@
 (defclass TypedCompleter [hy.completer.Completer]
   [[attr-matches
     (fn [self text]
-      (let [[m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text)]]
-        (try
-          (do
-            (when (none? m)
-              (raise Exception))
-            (let [[(, expr attr) (.group m 1 3)]
-                  [expr (.replace expr "_" "-")]
-                  [attr (.replace attr "_" "-")]
-                  [obj (eval expr (. self namespace))]
-                  [words (dir obj)]
-                  [n (len attr)]
-                  [matches []]]
-              (for [w words]
-                (when (= (slice w 0 n) attr)
-                  (.append matches
-                           {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
-                            "type" (make-type obj)})))
-              matches))
-          (except [e Exception]
-            []))))]
+      (setv m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text))
+      (try
+        (let [[(, expr attr) (.group m 1 3)]
+              [expr (.replace expr "_" "-")]
+              [attr (.replace attr "_" "-")]
+              [obj (eval (HySymbol expr) (. self namespace))]
+              [words (dir obj)]
+              [n (len attr)]
+              [matches []]]
+          (for [w words]
+            (when (= (slice w 0 n) attr)
+              (.append matches
+                       {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
+                        "type" (make-type obj)})))
+          matches)
+        (except [e Exception]
+          (print e)
+          (raise e)
+          [])))]
    [global-matches
     (fn [self text]
       (let [[matches []]]
