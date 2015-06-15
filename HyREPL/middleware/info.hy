@@ -19,18 +19,24 @@
 
 
 (defn get-info [symbol]
-  (let [[s (resolve-symbol symbol)]]
-    (if (not (none? s))
-      {"doc" (if (hasattr s '--doc--)
-               (. s --doc--)
-               "No doc string")
-       "name" symbol
-       "ns" (cond
-              [(hasattr s '--package--) (. s --package--)]
-              [(hasattr s '--module--) (. s --module--)]
-              [True "Hy"])
-       "static" "true"}
-      {})))
+  (let [[s (resolve-symbol symbol)]
+        [d (inspect.getdoc s)]
+        [c (inspect.getcomments s)]
+        [sig (and (callable s) (try (inspect.signature s) (except [e Exception])))]
+        [rv {}]]
+    (print "Got object " s " for symbol " symbol)
+    (when (not (none? s))
+      (.update rv {"doc" (or d c "No doc string")
+                   "static" "true"
+                   "ns" (or (. (inspect.getmodule s) --name--) "Hy")
+                   "name" symbol})
+      (try
+        (.update rv
+                 "file" (inspect.getfile s))
+        (except [e TypeError]))
+      (when sig
+        (.update rv  {"arglists-str" (str sig)})))
+    rv))
 
 
 (defop info [session msg transport]
