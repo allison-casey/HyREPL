@@ -44,7 +44,6 @@
           matches)
         (except [e Exception]
           (print e)
-          (raise e)
           [])))]
    [global-matches
     (fn [self text]
