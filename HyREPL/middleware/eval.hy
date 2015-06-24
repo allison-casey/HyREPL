@@ -83,9 +83,9 @@
                      (setv sys.stdout oldout)
                      (.format-excp self (sys.exc-info)))
                    (else
-                     (self.writer {"value" (.getvalue p) "ns" (.get self.msg "ns" "Hy")})
                      (when (and (= (.getvalue p) "None") (bool (.getvalue sys.stdout)))
-                       (self.writer {"out" (.getvalue sys.stdout)}))))))
+                       (self.writer {"out" (.getvalue sys.stdout)}))
+                     (self.writer {"value" (.getvalue p) "ns" (.get self.msg "ns" "Hy")})))))
              (setv sys.stdout oldout)
              (self.writer {"status" ["done"]})))))]
    [format-excp
