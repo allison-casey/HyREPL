@@ -1,6 +1,4 @@
 ;; https://github.com/clojure/tools.nrepl/blob/34093111923031888f8bf6da457aaebc3381d67e/doc/ops.md
-;; Missing ops:
-;; - ls-sessions
 ;; Incomplete ops:
 ;; - load-file (file name not handled)
 ;; - eval
