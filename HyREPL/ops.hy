@@ -117,3 +117,19 @@
        "returns" {"status" "\"need-input\" if more input is needed"}}
        (.put sys.stdin (get msg "value"))
        (.task-done sys.stdin))
+
+
+(defop "ls-sessions" [session msg transport]
+       {"doc" "Lists running sessions"
+        "requires" {}
+        "optional" {}
+        "returns" {"sessions" "A list of running sessions"}}
+       (import [HyREPL.session [sessions]]) ; Imported here to avoid circ. dependency
+       (.write session
+               {"status" ["done"]
+                "sessions" (list-comp
+                             (. s uuid)
+                             [s (.values sessions)])
+                "id" (.get msg "id")
+                "session" session.uuid}
+               transport))
