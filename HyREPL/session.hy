@@ -27,7 +27,8 @@
    [write
      (fn [self msg transport]
        (assert (in "id" msg))
-       (assoc msg "session" self.uuid)
+       (unless (in "session" msg)
+         (assoc msg "session" self.uuid))
        (print "out:" msg :file sys.stderr)
        (try
          (.sendall transport (bencode.encode msg))

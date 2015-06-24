@@ -106,7 +106,7 @@
                            "java" (make-version)
                            "clojure" (make-version)}
                "ops" (dict-comp k (:desc v) [(, k v) (.items ops)])
-               "session" session.uuid}
+               "session" (.get msg "session")}
                transport))
 
 
