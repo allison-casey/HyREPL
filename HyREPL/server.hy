@@ -9,7 +9,8 @@
 ; TODO: move these includes somewhere else
 (import [HyREPL.middleware [test eval complete info]])
 
-(defclass ReplServer [ThreadingMixIn TCPServer])
+(defclass ReplServer [ThreadingMixIn TCPServer]
+  [[allow-reuse-address True]])
 
 (defclass ReplRequestHandler [BaseRequestHandler]
   [[session None]
