@@ -33,3 +33,17 @@ Missing features
   the file type to `clojure` manually.
 * fireplace uses a lot of clojure-specific pieces of code. Most of these could
   be transformed with workarounds.
+
+Using HyREPL inside your own programs
+=====================================
+You can use HyREPL to add a remote control to your own programs. The following
+steps are a small example:
+
+    (import sys time
+      [HyREPL.server :as repl] [HyREPL.middleware.eval :as repl-mw])
+    (setv (. repl-mw eval-module) (get (. sys modules) '--main--))
+    (defmain [&rest args]
+      (let [[s (repl.start-server)]]
+        (print (.format "Listening on {}" (. (second s) server-address)))
+        (while True
+          (time.sleep 1))))
