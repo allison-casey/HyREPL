@@ -18,14 +18,16 @@
     (fn [self]
       (print "New client" :file sys.stderr)
       (let [[buf (bytearray)]
+            [tmp None]
             [msg (,)]]
         (while True
           (try
-            (.extend buf (.recv self.request 1024))
+            (setv tmp (.recv self.request 1024))
             (catch [e OSError]
               (break)))
-          (when (= (len buf) 0)
+          (when (= (len tmp) 0)
             (break))
+          (.extend buf tmp)
           (try
             (do
               (setv m (bencode.decode buf))
