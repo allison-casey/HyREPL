@@ -60,9 +60,10 @@ Using HyREPL inside your own programs
 You can use HyREPL to add a remote control to your own programs. The following
 steps are a small example:
 
-    (import sys time
-      [HyREPL.server :as repl] [HyREPL.middleware.eval :as repl-mw])
-    (setv (. repl-mw eval-module) (get (. sys modules) '--main--))
+    (import time
+      [HyREPL.server :as repl]
+      [HyREPL.middleware.eval :as repl-mw])
+    (setv (. repl-mw eval-module) (globals))
     (defmain [&rest args]
       (let [[s (repl.start-server)]]
         (print (.format "Listening on {}" (. (second s) server-address)))
