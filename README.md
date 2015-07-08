@@ -1,12 +1,15 @@
-HyREPL 
+HyREPL
 ======
+
+HyREPL is an implementation of the [nREPL](https://github.com/clojure/tools.nrepl)
+protocol for [Hy](https://github.com/hylang/hy).
 
 [![asciicast](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4.png)](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4)
 
-
-Experimental! 
+Experimental!
 =============
-Requires Python3.
+HyREPL requires Python3 and is still a work in progress. It is suitable for
+daily usage though :)
 
 To install, run
 
@@ -17,7 +20,25 @@ Then set your `PYTHONPATH` to include the path to HyREPL:
     export PYTHONPATH=~/src/HyREPL
 
 To run the tests, simply execute `nosetests-3.4 -v`. The tests create (and bind
-to) a socket at `/tmp/HyREPL-test`.
+to) a UNIX domain socket at `/tmp/HyREPL-test`.
+
+Confirmed working nREPL clients
+-------------------------------
+
+This list is not exhaustive, and HyREPL does not support all features offered by
+these clients, such as advanced debugger integration, profiling or tracing. Jump
+to source is also not supported.
+
+### Vim
+* `fireplace` with [vim-hy](https://github.com/hylang/vim-hy) to provide the
+  necessary glue
+
+### Emacs
+* `cider`
+* `monroe`
+
+### Console
+* `python-nrepl-client`
 
 Using HyREPL with fireplace
 ===========================
@@ -47,3 +68,10 @@ steps are a small example:
         (print (.format "Listening on {}" (. (second s) server-address)))
         (while True
           (time.sleep 1))))
+
+Made with ♥
+===========
+
+If you encounter bugs or missing features, please create an [issue
+report](https://github.com/Foxboron/HyREPL/issues). Patches are always welcome.
+If you have questions, we hang out in `#hy` on Freenode.
