@@ -42,10 +42,21 @@ to source is also not supported.
 
 Using HyREPL with fireplace
 ===========================
-Open a Hy file and set the file type to `clojure`: `set filetype=clojure`. Then
-run `hy -m HyREPL.server` in your target directory.  Connect vim to the REPL
-with `:Connect`.  Use `nrepl` as the protocol, `localhost` as the host and the
-port number HyREPL printed on start.
+
+For the best integration, install [vim-hy](https://github.com/hylang/vim-hy). It
+offers syntax highlighting and indentation support as well as wrappers around
+fireplace to make it more Hy-friendly.
+
+Run `hy -m HyREPL.server` in your target directory and open a Hy file in vim.
+You can also use `:setf hy` to set the file type explicitly.  Connect vim to the
+REPL with `:Connect`.  Use `nrepl` as the protocol, `localhost` as the host and
+the port number HyREPL printed on start.
+
+Without `vim-hy`
+----------------
+Open a Hy file and set the file type to `clojure`: `set filetype=clojure`. This
+will suck because it doesn't support `:Doc`. Other things might be broken as
+well.
 
 Missing features
 ----------------
