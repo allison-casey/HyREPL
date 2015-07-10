@@ -74,3 +74,8 @@
                    "\n    (catch Throwable _ \"not installed\"))")
                 [session msg]
                 "\"not installed\"")
+
+(def-workaround "(clojure.stacktrace/print-cause-trace *e)"
+                [session msg]
+                "(do (import traceback) (.print_last traceback))")
+
