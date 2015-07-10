@@ -159,8 +159,8 @@
       (.raise-exc self SystemExit))]
    [run
      (fn [self]
-       (let [[code (get (.values (get (tokenize (get self.msg "data")) 0)) 10)]
-             [output '()]
+       (let [[code (last (.values (get (tokenize (get self.msg "data")) 0)))]
+             [output []]
              [oldout sys.stdout]]
          (try
            (setv self.tokens (tokenize code))
@@ -181,14 +181,30 @@
                      (.format-excp self (sys.exc-info)))
                    (else
                      (setv sys.stdout oldout)
-                     (.append output {"meta" {"line" i.start-line
-                                              "column" i.start-column 
-                                              "end-line" i.end-line
-                                              "end-column" i.end-column} 
-                                      "result" (.getvalue p)})))))
-             (self.writer {"results" output 
-                           "ns" "repltest.core" 
-                           "op" "editor.eval.clj"})
+                     ; Needs to refactor this
+                     (def out "{:meta (:line %s :column %s :end-line %s :end-column %s) :result %s}")
+                     (def out (+ "{:meta {:line "
+                                 (str i.start-line)
+                                 ", :column "
+                                 (str i.start-column)
+                                 ", :end-line "
+                                 (str i.end-line)
+                                 ", :end-column "
+                                 (str i.end-column)
+                                 "}, :result \""
+                                 (str (.getvalue p)) 
+                                 "\"}"
+))
+                     (.append output out)))))
+
+             (def output (.join " " output))
+             (def output (+ "(" output))
+             (def output (+ output "),"))
+             (def output (+ "{:results " output " :ns repltest.core}"))
+             (print output)
+             ;(def output "{:results ({:meta {:line 1, :column 1, :end-line 1, :end-column 7}, :result \"4\"}), :ns repltest.core}")
+             (self.writer {"data" output 
+                           "op" "editor.eval.clj.result"})
               
              (self.writer {"status" ["done"]})))))]
    [format-excp

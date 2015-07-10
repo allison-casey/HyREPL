@@ -29,6 +29,9 @@ This list is not exhaustive, and HyREPL does not support all features offered by
 these clients, such as advanced debugger integration, profiling or tracing. Jump
 to source is also not supported.
 
+### Lighttable
+* Support live eval by connecting with `Clojure nrepl`. Still basic and buggy 
+
 ### Vim
 * `fireplace` with [vim-hy](https://github.com/hylang/vim-hy) to provide the
   necessary glue
