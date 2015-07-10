@@ -159,13 +159,14 @@
       (.raise-exc self SystemExit))]
    [run
      (fn [self]
-       (let [[code "(+ 2 2)\n\n(- 2 2)"]
+       (let [[code (get (.values (get (tokenize (get self.msg "data")) 0)) 10)]
              [output '()]
              [oldout sys.stdout]]
          (try
            (setv self.tokens (tokenize code))
            (catch [e Exception]
              (.format-excp self (sys.exc-info))
+             ;; Since we cant get the keywords we get the values
              (self.writer {"status" ["done"] "id" (get self.msg "id")}))
            (else
              ; TODO: add 'eval_msg' updates too the current session
@@ -185,9 +186,9 @@
                                               "end-line" i.end-line
                                               "end-column" i.end-column} 
                                       "result" (.getvalue p)})))))
-             (self.writer {":results" output 
-                           ":ns" "Hy" 
-                           ":op" "editor.eval.clj"})
+             (self.writer {"results" output 
+                           "ns" "repltest.core" 
+                           "op" "editor.eval.clj"})
               
              (self.writer {"status" ["done"]})))))]
    [format-excp
