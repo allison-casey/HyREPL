@@ -8,8 +8,8 @@ protocol for [Hy](https://github.com/hylang/hy).
 
 Experimental!
 =============
-HyREPL requires Python3 and is still a work in progress. It is suitable for
-daily usage though :)
+HyREPL requires Python3 and Hy from Git. It is still a work in progress, but it
+is suitable for daily usage :)
 
 To install, run
 

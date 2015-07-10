@@ -1,2 +1,2 @@
 nose
-hy
+git+https://github.com/hylang/hy.git
