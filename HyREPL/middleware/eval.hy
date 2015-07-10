@@ -131,6 +131,103 @@
                                   (.write session x transport))))
            (.start session.repl))))
 
+(defclass InterruptibleEval-lt [threading.Thread]
+  ; """Repl simulation. This is a thread so hangs don't block everything."""
+  [[--init--
+     (fn [self msg session writer]
+       (.--init-- (super))
+       (setv self.writer writer)
+       (setv self.msg msg)
+       (setv self.session session)
+       (setv sys.stdin (HyReplSTDIN writer))
+       ; we're locked under self.session.lock, so modification is safe
+       (setv self.session.eval-id (.get msg "id"))
+       None)]
+   [raise-exc
+    (fn [self exc]
+      (assert (.isAlive self) "Trying to raise exception on dead thread!")
+      (for [(, tid tobj) (.items threading.-active)]
+        (when (is tobj self)
+          (async-raise tid exc)
+          (break))))]
+   [terminate
+    (fn [self]
+      (.raise-exc self SystemExit))]
+   [run
+     (fn [self]
+       (let [[code "(+ 2 2)\n\n(- 2 2)"]
+             [output '()]
+             [oldout sys.stdout]]
+         (try
+           (setv self.tokens (tokenize code))
+           (catch [e Exception]
+             (.format-excp self (sys.exc-info))
+             (self.writer {"status" ["done"] "id" (get self.msg "id")}))
+           (else
+             ; TODO: add 'eval_msg' updates too the current session
+             (for [i self.tokens]
+               (let [[p (StringIO)]]
+                 (try
+                   (do
+                     (setv sys.stdout (StringIO))
+                     (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
+                   (except [e Exception]
+                     (setv sys.stdout oldout)
+                     (.format-excp self (sys.exc-info)))
+                   (else
+                     (setv sys.stdout oldout)
+                     (.append output {"meta" {"line" i.start-line
+                                              "column" i.start-column 
+                                              "end-line" i.end-line
+                                              "end-column" i.end-column} 
+                                      "result" (.getvalue p)})))))
+             (self.writer {":results" output 
+                           ":ns" "Hy" 
+                           ":op" "editor.eval.clj"})
+              
+             (self.writer {"status" ["done"]})))))]
+   [format-excp
+     (fn [self trace]
+       (let [[exc-type (first trace)]
+             [exc-value (second trace)]
+             [exc-traceback (get trace 2)]]
+         (setv self.session.last-traceback exc-traceback)
+         (self.writer {"status" ["eval-error"]
+                      "ex" (. exc-type --name--)
+                      "root-ex" (. exc-type --name--)
+                      "id" (.get self.msg "id")})
+         (when (instance? LexException exc-value)
+           (when (is exc-value.source None)
+             (setv exc-value.source ""))
+           (setv exc-value (.format "LexException: {}" exc-value.message)))
+         (self.writer {"err" (.strip (str exc-value))})))]])
+
+(defop "editor.eval.clj" [session msg transport]
+       {"doc" "Evaluates code."
+        "requires" {"data" "The code to be evaluated"}
+        "optional" {"session" (+ "The ID of the session in which the code will"
+                                 " be evaluated. If absent, a new session will"
+                                 " be generated")
+                    "id" "An opaque message ID that will be included in the response"}
+        "returns" {"ex" "Type of the exception thrown, if any. If present, `value` will be absent."
+                   "ns" (+ "The current namespace after the evaluation of `code`."
+                           " For HyREPL, this will always be `Hy`.")
+                   "root-ex" "Same as `ex`"
+                   "value" (+ "The values returned by `code` if execution was "
+                              "successful. Absent if `ex` and `root-ex` are
+                              present")}}
+       (let [[d true]]
+         (print "HEYHO")
+         (with [session.lock]
+           (when (and (is-not session.repl None) (.is-alive session.repl))
+             (.join session.repl))
+           (setv session.repl
+             (InterruptibleEval-lt msg session
+                                (fn [x]
+                                  (assoc x "id" (.get msg "id"))
+                                  (.write session x transport))))
+           (print "Ran correct")
+           (.start session.repl))))
 
 (defop interrupt [session msg transport]
        {"doc" "Interrupt a running eval"
