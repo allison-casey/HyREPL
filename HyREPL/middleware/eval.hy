@@ -131,6 +131,7 @@
                                   (.write session x transport))))
            (.start session.repl))))
 
+
 (defclass InterruptibleEval-lt [threading.Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
   [[--init--
@@ -217,7 +218,6 @@
                               "successful. Absent if `ex` and `root-ex` are
                               present")}}
        (let [[d true]]
-         (print "HEYHO")
          (with [session.lock]
            (when (and (is-not session.repl None) (.is-alive session.repl))
              (.join session.repl))
@@ -226,7 +226,6 @@
                                 (fn [x]
                                   (assoc x "id" (.get msg "id"))
                                   (.write session x transport))))
-           (print "Ran correct")
            (.start session.repl))))
 
 (defop interrupt [session msg transport]
