@@ -78,7 +78,10 @@
                  (try
                    (do
                      (setv sys.stdout (StringIO))
-                     (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
+                     (.write p (str (hy-eval i (if (instance? dict eval-module)
+                                                 eval-module
+                                                 (. eval-module --dict--))
+                                             "__main__"))))
                    (except [e Exception]
                      (setv sys.stdout oldout)
                      (.format-excp self (sys.exc-info)))
