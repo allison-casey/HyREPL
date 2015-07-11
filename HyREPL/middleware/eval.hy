@@ -105,7 +105,7 @@
            (when (is exc-value.source None)
              (setv exc-value.source ""))
            (setv exc-value (.format "LexException: {}" exc-value.message)))
-         (self.writer {"err" (.strip (str exc-value))}H)))]])
+         (self.writer {"err" (.strip (str exc-value))})))]])
 
 
 (defop eval [session msg transport]
@@ -119,9 +119,9 @@
                    "ns" (+ "The current namespace after the evaluation of `code`."
                            " For HyREPL, this will always be `Hy`.")
                    "root-ex" "Same as `ex`"
-                   "value" (+ "The values returned by `code` if execution was "
-                              "successful. Absent if `ex` and `root-ex` are
-                              present")}}
+                   "value" (+ "The values returned by `code` if execution was"
+                              " successful. Absent if `ex` and `root-ex` are"
+                              " present")}}
        (let [[w (get-workaround (get msg "code"))]]
          (assoc msg "code" (w session msg))
          (with [session.lock]
@@ -135,29 +135,9 @@
            (.start session.repl))))
 
 
-(defclass InterruptibleEval-lt [threading.Thread]
+(defclass LightTableEval [InterruptibleEval]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
-  [[--init--
-     (fn [self msg session writer]
-       (.--init-- (super))
-       (setv self.writer writer)
-       (setv self.msg msg)
-       (setv self.session session)
-       (setv sys.stdin (HyReplSTDIN writer))
-       ; we're locked under self.session.lock, so modification is safe
-       (setv self.session.eval-id (.get msg "id"))
-       None)]
-   [raise-exc
-    (fn [self exc]
-      (assert (.isAlive self) "Trying to raise exception on dead thread!")
-      (for [(, tid tobj) (.items threading.-active)]
-        (when (is tobj self)
-          (async-raise tid exc)
-          (break))))]
-   [terminate
-    (fn [self]
-      (.raise-exc self SystemExit))]
-   [run
+  [[run
      (fn [self]
        (let [[code (last (.values (get (tokenize (get self.msg "data")) 0)))]
              [output []]
@@ -203,23 +183,7 @@
              ;(def output "{:results ({:meta {:line 1, :column 1, :end-line 1, :end-column 7}, :result \"4\"}), :ns repltest.core}")
              (self.writer {"data" output 
                            "op" "editor.eval.clj.result"})
-              
-             (self.writer {"status" ["done"]})))))]
-   [format-excp
-     (fn [self trace]
-       (let [[exc-type (first trace)]
-             [exc-value (second trace)]
-             [exc-traceback (get trace 2)]]
-         (setv self.session.last-traceback exc-traceback)
-         (self.writer {"status" ["eval-error"]
-                      "ex" (. exc-type --name--)
-                      "root-ex" (. exc-type --name--)
-                      "id" (.get self.msg "id")})
-         (when (instance? LexException exc-value)
-           (when (is exc-value.source None)
-             (setv exc-value.source ""))
-           (setv exc-value (.format "LexException: {}" exc-value.message)))
-         (self.writer {"err" (.strip (str exc-value))})))]])
+             (self.writer {"status" ["done"]})))))]])
 
 (defop "editor.eval.clj" [session msg transport]
        {"doc" "Evaluates code."
@@ -240,7 +204,7 @@
            (when (and (is-not session.repl None) (.is-alive session.repl))
              (.join session.repl))
            (setv session.repl
-             (InterruptibleEval-lt msg session
+             (LightTableEval msg session
                                 (fn [x]
                                   (assoc x "id" (.get msg "id"))
                                   (.write session x transport))))
