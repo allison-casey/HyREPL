@@ -1,5 +1,6 @@
 (import types sys threading [queue [Queue]] traceback [io [StringIO]])
 (import ctypes)
+(import traceback)
 
 (import
   [hy.importer [ast-compile hy-eval]]
@@ -147,7 +148,8 @@
            (catch [e Exception]
              (.format-excp self (sys.exc-info))
              ;; Since we cant get the keywords we get the values
-             (self.writer {"status" ["done"] "id" (get self.msg "id")})) (else
+             (self.writer {"status" ["done"] "id" (get self.msg "id")})) 
+            (else
              ; TODO: add 'eval_msg' updates too the current session
              (for [i self.tokens]
                (let [[p (StringIO)]]
@@ -157,7 +159,24 @@
                      (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
                    (except [e Exception]
                      (setv sys.stdout oldout)
-                     (.format-excp self (sys.exc-info)))
+                     (def err (first (sys.exc-info)))
+                     (def exc (second (sys.exc-info)))
+                     (def tb (get (sys.exc-info) 2))
+                     (def out "{:meta (:line %s :column %s :end-line %s :end-column %s) :result %s}")
+                     (def out (+ "{:meta {:line "
+                                 (str i.start-line)
+                                 ", :column "
+                                 (str i.start-column)
+                                 ", :end-line "
+                                 (str i.end-line)
+                                 ", :end-column "
+                                 (str i.end-column)
+                                 "}, :result \""
+                                 (str (.join "" (.format-exception-only traceback (type exc) exc)))
+                                 "\", :stack \""
+                                 (str (.replace (.join "" (.format-exception traceback err exc tb)) "\"" ""))
+                                 "\", :ex true}"))
+                     (.append output out))
                    (else
                      ; Needs to refactor this
                      (def out "{:meta (:line %s :column %s :end-line %s :end-column %s) :result %s}")
@@ -170,7 +189,7 @@
                                  ", :end-column "
                                  (str i.end-column)
                                  "}, :result \""
-                                 (str (if (= (.getvalue p) "None") (.getvalue sys.stdout) (.getvalue p))) 
+                                 (.strip (str (if (= (.getvalue p) "None") (.getvalue sys.stdout) (.getvalue p)))) 
                                  "\"}"))
                      (.append output out)))))
 
@@ -178,12 +197,13 @@
              (def output (.join " " output))
              (def output (+ "(" output))
              (def output (+ output "),"))
-             (def output (+ "{:results " output " :ns repltest.core}"))
+             (def output (+ "{:results " output " :ns something.something}"))
              (print output)
              ;(def output "{:results ({:meta {:line 1, :column 1, :end-line 1, :end-column 7}, :result \"4\"}), :ns repltest.core}")
              (self.writer {"data" output 
                            "op" "editor.eval.clj.result"})
              (self.writer {"status" ["done"]})))))]])
+
 
 (defop "editor.eval.clj" [session msg transport]
        {"doc" "Evaluates code."
