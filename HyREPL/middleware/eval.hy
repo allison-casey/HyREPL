@@ -105,7 +105,7 @@
            (when (is exc-value.source None)
              (setv exc-value.source ""))
            (setv exc-value (.format "LexException: {}" exc-value.message)))
-         (self.writer {"err" (.strip (str exc-value))}H)))]])
+         (self.writer {"err" (.strip (str exc-value))})))]])
 
 
 (defop eval [session msg transport]
@@ -119,9 +119,9 @@
                    "ns" (+ "The current namespace after the evaluation of `code`."
                            " For HyREPL, this will always be `Hy`.")
                    "root-ex" "Same as `ex`"
-                   "value" (+ "The values returned by `code` if execution was "
-                              "successful. Absent if `ex` and `root-ex` are
-                              present")}}
+                   "value" (+ "The values returned by `code` if execution was"
+                              " successful. Absent if `ex` and `root-ex` are"
+                              " present")}}
        (let [[w (get-workaround (get msg "code"))]]
          (assoc msg "code" (w session msg))
          (with [session.lock]
