@@ -105,7 +105,7 @@
            (when (is exc-value.source None)
              (setv exc-value.source ""))
            (setv exc-value (.format "LexException: {}" exc-value.message)))
-         (self.writer {"err" (.strip (str exc-value))})))]])
+         (self.writer {"err" (.strip (str exc-value))}H)))]])
 
 
 (defop eval [session msg transport]
@@ -167,8 +167,7 @@
            (catch [e Exception]
              (.format-excp self (sys.exc-info))
              ;; Since we cant get the keywords we get the values
-             (self.writer {"status" ["done"] "id" (get self.msg "id")}))
-           (else
+             (self.writer {"status" ["done"] "id" (get self.msg "id")})) (else
              ; TODO: add 'eval_msg' updates too the current session
              (for [i self.tokens]
                (let [[p (StringIO)]]
@@ -180,7 +179,6 @@
                      (setv sys.stdout oldout)
                      (.format-excp self (sys.exc-info)))
                    (else
-                     (setv sys.stdout oldout)
                      ; Needs to refactor this
                      (def out "{:meta (:line %s :column %s :end-line %s :end-column %s) :result %s}")
                      (def out (+ "{:meta {:line "
@@ -192,11 +190,11 @@
                                  ", :end-column "
                                  (str i.end-column)
                                  "}, :result \""
-                                 (str (.getvalue p)) 
-                                 "\"}"
-))
+                                 (str (if (= (.getvalue p) "None") (.getvalue sys.stdout) (.getvalue p))) 
+                                 "\"}"))
                      (.append output out)))))
 
+             (setv sys.stdout oldout)
              (def output (.join " " output))
              (def output (+ "(" output))
              (def output (+ output "),"))
