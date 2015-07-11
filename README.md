@@ -4,7 +4,7 @@ HyREPL
 HyREPL is an implementation of the [nREPL](https://github.com/clojure/tools.nrepl)
 protocol for [Hy](https://github.com/hylang/hy).
 
-[![asciicast](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4.png)](https://asciinema.org/a/0wdozdb8ohccuktt7henyt1r4)
+[![lighttable](https://i.imgur.com/Yt8KRAq.gif)](https://i.imgur.com/Yt8KRAq.gif)
 
 Experimental!
 =============
