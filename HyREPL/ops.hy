@@ -65,7 +65,7 @@
        (import [HyREPL.session [sessions]]) ; Imported here to avoid circ. dependency
        (try
          (del (get sessions (.get msg "session" "")))
-         (catch [e KeyError]))
+         (except [e KeyError]))
        (.close transport))
 
 
