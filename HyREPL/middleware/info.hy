@@ -11,7 +11,7 @@
 (defn resolve-symbol [sym]
   (setv sym (.replace sym "-" "_"))
   (when (.endswith sym "?")
-    (setv sym (+ "is-" (slice sym 0 -1))))
+    (setv sym (+ "is-" (cut sym 0 -1))))
   (try
     (eval (HySymbol sym) (. eval-module --dict--))
     (except [e NameError]

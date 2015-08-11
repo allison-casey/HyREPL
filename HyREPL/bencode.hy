@@ -15,20 +15,20 @@
   "Decodes `thing` and returns the first parsed bencode value encountered as"
   "well as the unparsed rest"
   (cond
-    [(.startswith thing #b"d") (decode-dict (slice thing 1))]
-    [(.startswith thing #b"l") (decode-list (slice thing 1))]
-    [(.startswith thing #b"i") (decode-int (slice thing 1))]
+    [(.startswith thing #b"d") (decode-dict (cut thing 1))]
+    [(.startswith thing #b"l") (decode-list (cut thing 1))]
+    [(.startswith thing #b"i") (decode-int (cut thing 1))]
     [True ; assume string
       (let [[delim (.find thing #b":")]
-            [size (int (.decode (slice thing 0 delim) "utf-8"))]]
-        (, (.decode (slice thing (inc delim) (+ size (inc delim))) "utf-8")
-           (slice thing (+ size (inc delim)))))]))
+            [size (int (.decode (cut thing 0 delim) "utf-8"))]]
+        (, (.decode (cut thing (inc delim) (+ size (inc delim))) "utf-8")
+           (cut thing (+ size (inc delim)))))]))
 
 
 (defn decode-int [thing]
   (let [[end (.find thing #b"e")]]
-    (, (int (slice thing 0 end) 10)
-       (slice thing (inc end)))))
+    (, (int (cut thing 0 end) 10)
+       (cut thing (inc end)))))
 
 
 (defn decode-list [thing]
@@ -41,7 +41,7 @@
         (break)))
     (when (= (len t) 0)
       (raise (ValueError "List without end marker")))
-    (, rv (slice t 1))))
+    (, rv (cut t 1))))
 
 
 (defn decode-dict [thing]
@@ -55,7 +55,7 @@
         (break)))
     (when (= (len t) 0)
       (raise (ValueError "Dictionary without end marker")))
-    (, rv (slice t 1))))
+    (, rv (cut t 1))))
 
 
 (defn encode [thing]

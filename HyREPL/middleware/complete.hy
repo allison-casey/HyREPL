@@ -37,7 +37,7 @@
               [n (len attr)]
               [matches []]]
           (for [w words]
-            (when (= (slice w 0 n) attr)
+            (when (= (cut w 0 n) attr)
               (.append matches
                        {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
                         "type" (make-type obj)})))
