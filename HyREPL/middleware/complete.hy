@@ -25,36 +25,35 @@
 
 
 (defclass TypedCompleter [hy.completer.Completer]
-  [[attr-matches
-    (fn [self text]
-      (setv m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text))
-      (try
-        (let [[(, expr attr) (.group m 1 3)]
-              [expr (.replace expr "_" "-")]
-              [attr (.replace attr "_" "-")]
-              [obj (eval (HySymbol expr) (. self namespace))]
-              [words (dir obj)]
-              [n (len attr)]
-              [matches []]]
-          (for [w words]
-            (when (= (cut w 0 n) attr)
-              (.append matches
-                       {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
-                        "type" (make-type obj)})))
-          matches)
-        (except [e Exception]
-          (print e)
-          [])))]
-   [global-matches
-    (fn [self text]
-      (let [[matches []]]
-        (for [p (. self path) (, k v) (.items p)]
-          (when (instance? str k)
-            (setv k (.replace k "_" "-"))
-            (when (.startswith k text)
-              (.append matches {"candidate" k
-                                "type" (make-type v)}))))
-        matches))]])
+  (defn attr-matches [self text]
+    (setv m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text))
+    (print (dir (. self namespace)))
+    (try
+      (let [[(, expr attr) (.group m 1 3)]
+            [expr (.replace expr "_" "-")]
+            [attr (.replace attr "_" "-")]
+            [obj (eval (HySymbol expr) (. self namespace))]
+            [words (dir obj)]
+            [n (len attr)]
+            [matches []]]
+        (for [w words]
+          (when (= (cut w 0 n) attr)
+            (.append matches
+                     {"candidate" (.format "{}.{}" expr (.replace w "_" "-"))
+                      "type" (make-type obj)})))
+        matches)
+      (except [e Exception]
+        (print e)
+        [])))
+  (defn global-matches [self text]
+    (let [[matches []]]
+      (for [p (. self path) (, k v) (.items p)]
+        (when (instance? str k)
+          (setv k (.replace k "_" "-"))
+          (when (.startswith k text)
+            (.append matches {"candidate" k
+                              "type" (make-type v)}))))
+      matches)))
 
 
 (defn get-completions [stem &optional extra]
