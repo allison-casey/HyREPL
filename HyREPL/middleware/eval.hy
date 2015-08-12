@@ -1,4 +1,4 @@
-(import types sys threading [queue [Queue]] traceback [io [StringIO]])
+(import types sys threading [queue [Queue]] [io [StringIO]])
 (import ctypes)
 (import traceback)
 
