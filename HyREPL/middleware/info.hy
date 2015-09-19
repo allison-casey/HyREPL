@@ -22,7 +22,7 @@
   (let [[s (resolve-symbol symbol)]
         [d (inspect.getdoc s)]
         [c (inspect.getcomments s)]
-        [sig (and (callable s) (try (inspect.signature s) (except [e Exception])))]
+        [sig (and (callable s) (inspect.signature s))]
         [rv {}]]
     (print "Got object " s " for symbol " symbol)
     (when (not (none? s))
