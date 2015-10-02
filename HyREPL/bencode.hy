@@ -3,7 +3,7 @@
 
 (defn decode-multiple [thing]
   "Uses `decode` to decode all encoded values in `thing`."
-  (let [[r []] [i (,)] [t thing]]
+  (let [r [] i (,) t thing]
     (while (> (len t) 0)
       (setv i (decode t))
       (.append r (first i))
@@ -19,20 +19,20 @@
     [(.startswith thing #b"l") (decode-list (cut thing 1))]
     [(.startswith thing #b"i") (decode-int (cut thing 1))]
     [True ; assume string
-      (let [[delim (.find thing #b":")]
-            [size (int (.decode (cut thing 0 delim) "utf-8"))]]
+      (let [delim (.find thing #b":")
+            size (int (.decode (cut thing 0 delim) "utf-8"))]
         (, (.decode (cut thing (inc delim) (+ size (inc delim))) "utf-8")
            (cut thing (+ size (inc delim)))))]))
 
 
 (defn decode-int [thing]
-  (let [[end (.find thing #b"e")]]
+  (let [end (.find thing #b"e")]
     (, (int (cut thing 0 end) 10)
        (cut thing (inc end)))))
 
 
 (defn decode-list [thing]
-  (let [[rv []] [i (,)] [t thing]]
+  (let [rv [] i (,) t thing]
     (while (> (len t) 0)
       (setv i (decode t))
       (.append rv (first i))
@@ -45,7 +45,7 @@
 
 
 (defn decode-dict [thing]
-  (let [[rv {}] [k (,)] [v (,)] [t thing]]
+  (let [rv {} k (,) v (,) t thing]
     (while (> (len t) 0)
       (setv k (decode t))
       (setv v (decode (second k)))
@@ -82,7 +82,7 @@
   #b(.format "{}:{}" (len thing) (.decode thing "utf-8")))
 
 (defn encode-dict [thing]
-  (let [[rv (bytearray #b"d")]]
+  (let [rv (bytearray #b"d")]
     (for [i (.items thing)]
       (.extend rv (encode (first i)))
       (.extend rv (encode (second i))))
@@ -90,7 +90,7 @@
     (bytes rv)))
 
 (defn encode-list [thing]
-  (let [[rv (bytearray #b"l")]]
+  (let [rv (bytearray #b"l")]
     (for [i thing]
       (.extend rv (encode i)))
     (.extend rv #b"e")

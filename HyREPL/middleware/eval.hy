@@ -29,8 +29,8 @@
 
 
 (defn async-raise [tid exc]
-  (let [[res (ctypes.pythonapi.PyThreadState-SetAsyncExc (ctypes.c-long tid)
-                                                         (ctypes.py-object exc))]]
+  (let [res (ctypes.pythonapi.PyThreadState-SetAsyncExc (ctypes.c-long tid)
+                                                        (ctypes.py-object exc))]
     (cond
       [(= res 0) (raise (ValueError (.format "Thread ID does not exist: {}" tid)))]
       [(> res 1)
@@ -59,8 +59,8 @@
   (defn terminate [self]
     (.raise-exc self SystemExit))
   (defn run [self]
-    (let [[code (get self.msg "code")]
-          [oldout sys.stdout]]
+    (let [code (get self.msg "code")
+          oldout sys.stdout]
       (try
         (setv self.tokens (tokenize code))
         (except [e Exception]
@@ -69,7 +69,7 @@
         (else
           ; TODO: add 'eval_msg' updates too the current session
           (for [i self.tokens]
-            (let [[p (StringIO)]]
+            (let [p (StringIO)]
               (try
                 (do
                   (setv sys.stdout (StringIO))
@@ -87,10 +87,11 @@
           (setv sys.stdout oldout)
           (self.writer {"status" ["done"]})))))
   (defn format-excp [self trace]
-    (let [[exc-type (first trace)]
-          [exc-value (second trace)]
-          [exc-traceback (get trace 2)]]
+    (let [exc-type (first trace)
+          exc-value (second trace)
+          exc-traceback (get trace 2)]
       (setv self.session.last-traceback exc-traceback)
+      (traceback.print_tb exc-traceback)
       (self.writer {"status" ["eval-error"]
                     "ex" (. exc-type --name--)
                     "root-ex" (. exc-type --name--)
@@ -116,7 +117,7 @@
                    "value" (+ "The values returned by `code` if execution was"
                               " successful. Absent if `ex` and `root-ex` are"
                               " present")}}
-       (let [[w (get-workaround (get msg "code"))]]
+       (let [w (get-workaround (get msg "code"))]
          (assoc msg "code" (w session msg))
          (with [session.lock]
            (when (and (is-not session.repl None) (.is-alive session.repl))
@@ -132,9 +133,9 @@
 (defclass LightTableEval [InterruptibleEval]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
   (defn run [self]
-    (let [[code (last (.values (get (tokenize (get self.msg "data")) 0)))]
-          [output []]
-          [oldout sys.stdout]]
+    (let [code (last (.values (get (tokenize (get self.msg "data")) 0)))
+          output []
+          oldout sys.stdout]
       (try
         (setv self.tokens (tokenize code))
         (except [e Exception]
@@ -144,7 +145,7 @@
         (else
           ; TODO: add 'eval_msg' updates too the current session
           (for [i self.tokens]
-            (let [[p (StringIO)]]
+            (let [p (StringIO)]
               (try
                 (do
                   (setv sys.stdout (StringIO))
@@ -211,7 +212,7 @@
                    "value" (+ "The values returned by `code` if execution was "
                               "successful. Absent if `ex` and `root-ex` are
                               present")}}
-       (let [[d true]]
+       (let [d true]
          (with [session.lock]
            (when (and (is-not session.repl None) (.is-alive session.repl))
              (.join session.repl))
@@ -258,9 +259,9 @@
         "optional" {"file-name" "name of the source file, for example for exceptions"
                     "file-path" "path to the source file"}
         "returns" (get (:desc (get ops "eval")) "returns")}
-       (let [[code (-> (get msg "file")
+       (let [code (-> (get msg "file")
                      (.split " " 2)
-                     (get 2))]]
+                     (get 2))]
          (print (.strip code) :file sys.stderr)
          (assoc msg "code" code)
          (del (get msg "file"))

@@ -11,7 +11,7 @@
   (hasattr f "__call__"))
 
 (defn get-workaround [code]
-  (let [rv]
+  (let [rv None]
     (for [w (.keys workarounds)]
       (when (or (and (callable? w) (w code)) (= w code))
         (setv rv (get workarounds w))
@@ -36,7 +36,7 @@
                    "(repeat \"\\n\") (map str (.getStackTrace *e)))) "
                    "\"\\n\\b\\n\")) *3 *2 *1]")
                 [session msg]
-                (let [[items []]]
+                (let [items []]
                   (with [session.lock]
                     (for [i (traceback.extract-tb session.last-traceback)]
                       (.append items (.format "{}({}:{})"

@@ -16,9 +16,9 @@
   [session None]
   (defn handle [self]
     (print "New client" :file sys.stderr)
-    (let [[buf (bytearray)]
-          [tmp None]
-          [msg (,)]]
+    (let [buf (bytearray)
+          tmp None
+          msg (,)]
       (while True
         (try
           (setv tmp (.recv self.request 1024))
@@ -45,15 +45,15 @@
 
 
 (defn start-server [&optional [ip "127.0.0.1"] [port 1337]]
-  (let [[s (ReplServer (, ip port) ReplRequestHandler)]
-        [t (threading.Thread :target s.serve-forever)]]
+  (let [s (ReplServer (, ip port) ReplRequestHandler)
+        t (threading.Thread :target s.serve-forever)]
     (setv t.daemon True)
     (.start t)
     (, t s)))
 
 
 (defmain [&rest args]
-  (let [[port 1337]]
+  (let [port 1337]
     (while True
       (try
         (start-server "127.0.0.1" port)

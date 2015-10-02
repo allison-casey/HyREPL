@@ -15,9 +15,9 @@
     (macro-error args "Arguments must be a list."))
   (if-not (instance? hy.models.dict.HyDict desc)
     (macro-error desc "Description must be a dictionary."))
-  (let [[fn-checked
+  (let [fn-checked
          `(fn ~args
-            (let [[g!failed False]]
+            (let [g!failed False]
               (for [g!r (.keys (.get ~desc "requires" {}))]
                 (unless (in g!r (second ~args))
                   (.write (first ~args)
@@ -28,9 +28,9 @@
                   (break)))
               (unless g!failed
                 (do
-                  ~@body))))]
-        [n (str name)]
-        [o {:f fn-checked :desc desc}]]
+                  ~@body))))
+        n (str name)
+        o {:f fn-checked :desc desc}]
     `(assoc ops ~n ~o)))
 
 
@@ -48,7 +48,7 @@
        "optional" {"session" "The session to be cloned. If this is left out, the current session is cloned"}
        "returns" {"new-session" "The ID of the new session"}}
        (import [HyREPL.session [Session]]) ; Imported here to avoid circ. dependency
-       (let [[s (Session)]]
+       (let [s (Session)]
          (.write session {"status" ["done"] "id" (.get msg "id") "new-session" (str s)} transport)))
 
 
