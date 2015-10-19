@@ -4,16 +4,25 @@ HyREPL
 HyREPL is an implementation of the [nREPL](https://github.com/clojure/tools.nrepl)
 protocol for [Hy](https://github.com/hylang/hy).
 
-Lighttable  
+Lighttable
 [![lighttable](https://i.imgur.com/Yt8KRAq.gif)](https://i.imgur.com/Yt8KRAq.gif)
 
-Fireplace  
+Fireplace
 [![fireplace](https://i.imgur.com/uWTEPoc.gif)](https://i.imgur.com/Yt8KRAq.gif)
 
 Experimental!
 =============
 HyREPL requires Python3 and Hy from Git. It is still a work in progress, but it
 is suitable for daily usage :)
+
+Note that you may have to use the latest version of hy - if it does not work with the
+PyPI version of hy, get the latest version like so:
+
+```bash
+git clone https://github.com/hylang/hy.git
+cd hy
+python3 setup.py install
+```
 
 To install, run
 
@@ -34,7 +43,7 @@ these clients, such as advanced debugger integration, profiling or tracing. Jump
 to source is also not supported.
 
 ### Lighttable
-* Support live eval by connecting with `Clojure nrepl`. Still basic and buggy 
+* Support live eval by connecting with `Clojure nrepl`. Still basic and buggy
 
 ### Vim
 * `fireplace` with [vim-hy](https://github.com/hylang/vim-hy) to provide the
