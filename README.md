@@ -17,11 +17,11 @@ is suitable for daily usage :)
 
 To install, run
 
-    pip install -r requirements
+    python setup.py install
 
-Then set your `PYTHONPATH` to include the path to HyREPL:
+or get it from pypi
 
-    export PYTHONPATH=~/src/HyREPL
+    pip install hyrepl
 
 To run the tests, simply execute `nosetests-3.4 -v`. The tests create (and bind
 to) a UNIX domain socket at `/tmp/HyREPL-test`.
