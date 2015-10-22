@@ -18,6 +18,7 @@ setup(
     author_email="morten@linderud.pw, gbe@unobtanium.de",
     long_description="nREPL implementation in Hylang",
     license="",
+    scripts=["bin/hyrepl"],
     url="https://github.com/Foxboron/HyREPL",
     platforms=['any'],
     classifiers=[
