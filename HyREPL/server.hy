@@ -53,7 +53,7 @@
 
 
 (defmain [&rest args]
-  (let [port 1337]
+  (let [port (if (last args) (int (last args)) 1337)]
     (while True
       (try
         (start-server "127.0.0.1" port)
