@@ -7,7 +7,7 @@ setup(
     version="0.1.0",
     install_requires = ['hy>=0.11'],
     dependency_links = [
-        'git+https://github.com/hylang/hy.git',
+        'https://github.com/hylang/hy/archive/master.zip#egg=hy-0.11',
     ],
     packages=find_packages(exclude=['tests']),
     package_data={
@@ -18,6 +18,7 @@ setup(
     author_email="morten@linderud.pw, gbe@unobtanium.de",
     long_description="nREPL implementation in Hylang",
     license="",
+    scripts=["bin/hyrepl"],
     url="https://github.com/Foxboron/HyREPL",
     platforms=['any'],
     classifiers=[
