@@ -1,7 +1,7 @@
 HyREPL
 ======
 
-HyREPL is an implementation of the [nREPL](https://github.com/clojure/tools.nrepl)
+HyREPL is an implementation of the [nREPL](https://nrepl.org)
 protocol for [Hy](https://github.com/hylang/hy).
 
 Lighttable  
