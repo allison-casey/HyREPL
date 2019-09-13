@@ -4,34 +4,33 @@
 ;; - eval
 
 (import sys)
+(require [hy.contrib.walk [let]])
 
 
-(def ops {})
+(setv ops {})
 
 (defmacro/g! defop [name args desc &rest body]
   (if-not (instance? (, str HySymbol) name)
     (macro-error name "Name must be a symbol or a string."))
-  (if-not (instance? hy.models.list.HyList args)
+  (if-not (list? args)
     (macro-error args "Arguments must be a list."))
-  (if-not (instance? hy.models.dict.HyDict desc)
-    (macro-error desc "Description must be a dictionary."))
-  (let [fn-checked
-         `(fn ~args
-            (let [g!failed False]
-              (for [g!r (.keys (.get ~desc "requires" {}))]
-                (unless (in g!r (second ~args))
-                  (.write (first ~args)
-                          {"status" ["done"]
-                           "id" (.get (second ~args) "id")
-                           "missing" (str g!r)} (nth ~args 2))
-                  (setv g!failed True)
-                  (break)))
-              (unless g!failed
-                (do
-                  ~@body))))
-        n (str name)
-        o {:f fn-checked :desc desc}]
-    `(assoc ops ~n ~o)))
+  (if-not (instance? HyDict desc)
+          (macro-error desc "Description must be a dictionary."))
+  (setv fn-checked
+        `(fn ~args
+           (setv g!failed False)
+           (for [g!r (.keys (.get ~desc "requires" {}))]
+             (unless (in g!r (second ~args))
+               (.write (first ~args)
+                       {"status" ["done"]
+                        "id" (.get (second ~args) "id")
+                        "missing" (str g!r)} (nth ~args 2))
+               (setv g!failed True)
+               (break)))
+           (unless g!failed (do ~@body))))
+  (setv n (str name))
+  (setv o {:f fn-checked :desc desc})
+  `(assoc ops ~n ~o))
 
 
 (defn find-op [op]
@@ -91,8 +90,8 @@
                "versions" {"nrepl" (make-version 0 2 7)
                            "java" (make-version)
                            "clojure" (make-version)}
-               "ops" (dict-comp k (:desc v) [(, k v) (.items ops)])
-               "session" (.get msg "session")}
+                "ops" (dfor [k v] (.items ops) [k (:desc v)])
+                "session" (.get msg "session")}
                transport))
 
 

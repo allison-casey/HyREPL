@@ -5,11 +5,11 @@
 
 (import
   hy.macros hy.compiler hy.core.language
-  [hy.models.symbol [HySymbol]]
   [hy.completer [Completer]])
 
 (import [HyREPL.ops [ops]])
-(require HyREPL.ops)
+(require [HyREPL.ops [defop]]
+         [hy.contrib.walk [let]])
 
 (import [HyREPL.middleware.eval [eval-module]])
 
@@ -29,9 +29,9 @@
     (setv m (re.match r"(\S+(\.[\w-]+)*)\.([\w-]*)$" text))
     (print (dir (. self namespace)))
     (try
-      (let [(, expr attr) (.group m 1 3)
-            expr (.replace expr "_" "-")
-            attr (.replace attr "_" "-")
+      (let [groups (.group m 1 3)
+            expr (.replace (first groups)"_" "-")
+            attr (.replace (second groups )"_" "-")
             obj (eval (HySymbol expr) (. self namespace))
             words (dir obj)
             n (len attr)

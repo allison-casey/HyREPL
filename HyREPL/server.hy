@@ -9,6 +9,8 @@
 ; TODO: move these includes somewhere else
 (import [HyREPL.middleware [test eval complete info]])
 
+(require [hy.contrib.walk [let]])
+
 (defclass ReplServer [ThreadingMixIn TCPServer]
   [allow-reuse-address True])
 
@@ -53,13 +55,19 @@
 
 
 (defmain [&rest args]
-  (let [port (if (last args) (int (last args)) 1337)]
-    (while True
-      (try
-        (start-server "127.0.0.1" port)
-        (except [e OSError]
-          (setv port (inc port)))
-        (else
-          (print (.format "Listening on {}" port) :file sys.stderr)
-          (while True
-            (time.sleep 1)))))))
+  (setv port
+        (if (> (len args) 0)
+            (try
+              (int (last args))
+              (except [_ ValueError]
+                1337))
+            1337))
+  (while True
+    (try
+       (start-server "127.0.0.1" port)
+       (except [e OSError]
+         (setv port (inc port)))
+       (else
+         (print (.format "Listening on {}" port) :file sys.stderr)
+         (while True
+           (time.sleep 1))))))

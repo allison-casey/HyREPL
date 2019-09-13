@@ -2,6 +2,7 @@
 
 (import [HyREPL.ops [ops find-op]])
 (require HyREPL.ops)   ; for `defop`
+(require [hy.contrib.walk [let]])
 
 (defmacro assert-multi [&rest cases]
   (let [[s (list-comp `(assert ~c) [c cases])]]

@@ -1,11 +1,11 @@
 (import sys inspect)
 
 (import
-  [hy.models.symbol [HySymbol]]
   [HyREPL.ops [ops]]
   [HyREPL.middleware.eval [eval-module]])
 
-(require HyREPL.ops)
+(require [HyREPL.ops [defop]]
+         [hy.contrib.walk [let]])
 
 
 (defn resolve-symbol [sym]
