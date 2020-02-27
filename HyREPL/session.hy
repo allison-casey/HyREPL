@@ -4,7 +4,7 @@
   [HyREPL.ops [find-op]])
 
 
-(def sessions {})
+(setv sessions {})
 
 
 (defclass Session [object]

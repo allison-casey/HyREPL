@@ -1,4 +1,6 @@
-(defreader b [expr] `(bytes ~expr "utf-8"))
+(require [hy.contrib.walk [let]])
+
+(deftag b [expr] `(bytes ~expr "utf-8"))
 
 
 (defn decode-multiple [thing]
@@ -75,7 +77,7 @@
   #b(.format "i{}e" thing))
 
 (defn encode-str [thing]
-  #b(.format "{}:{}" (len #bthing) thing))
+  #b(.format "{}:{}" (len #b thing) thing))
 
 
 (defn encode-bytes [thing]

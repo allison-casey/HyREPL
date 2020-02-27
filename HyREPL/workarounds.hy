@@ -2,8 +2,10 @@
 ; It prevents us from having to fork all sorts of clients though, so we got that going for, which is nice.
 
 (import traceback)
+(require [hy.contrib.walk [let]])
 
-(def workarounds {})
+(setv workarounds {})
+
 (defmacro def-workaround [match args &rest body]
   `(assoc workarounds ~match (fn ~args ~@body)))
 

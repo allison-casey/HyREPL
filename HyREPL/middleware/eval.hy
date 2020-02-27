@@ -3,14 +3,15 @@
 (import traceback)
 
 (import
-  [hy.importer [ast-compile hy-eval]]
   [hy.lex [tokenize]]
   [hy.lex.exceptions [LexException]])
 
 (import
   [HyREPL.workarounds [get-workaround]]
   [HyREPL.ops [ops find-op]])
-(require HyREPL.ops)
+
+(require [hy.contrib.walk [let]]
+         [HyREPL.ops [defop]])
 
 
 (defclass HyReplSTDIN [Queue]
@@ -25,7 +26,7 @@
     (.get self)))
 
 
-(def eval-module (types.ModuleType "__main__")) ; Module context for evaluations
+(setv eval-module (types.ModuleType "__main__")) ; Module context for evaluations
 
 
 (defn async-raise [tid exc]
@@ -73,9 +74,9 @@
               (try
                 (do
                   (setv sys.stdout (StringIO))
-                  (.write p (str (hy-eval i (if (instance? dict eval-module)
-                                              eval-module
-                                              (. eval-module --dict--))
+                  (.write p (str (eval i (if (instance? dict eval-module)
+                                             eval-module
+                                             (. eval-module --dict--))
                                           "__main__"))))
                 (except [e Exception]
                   (setv sys.stdout oldout)
@@ -117,17 +118,17 @@
                    "value" (+ "The values returned by `code` if execution was"
                               " successful. Absent if `ex` and `root-ex` are"
                               " present")}}
-       (let [w (get-workaround (get msg "code"))]
-         (assoc msg "code" (w session msg))
-         (with [session.lock]
-           (when (and (is-not session.repl None) (.is-alive session.repl))
-             (.join session.repl))
-           (setv session.repl
-             (InterruptibleEval msg session
-                                (fn [x]
-                                  (assoc x "id" (.get msg "id"))
-                                  (.write session x transport))))
-           (.start session.repl))))
+  (let [w (get-workaround (get msg "code"))]
+    (assoc msg "code" (w session msg))
+    (with [session.lock]
+      (when (and (is-not session.repl None) (.is-alive session.repl))
+        (.join session.repl))
+      (setv session.repl
+            (InterruptibleEval msg session
+                               (fn [x]
+                                 (assoc x "id" (.get msg "id"))
+                                 (.write session x transport))))
+      (.start session.repl))))
 
 
 (defclass LightTableEval [InterruptibleEval]
@@ -149,7 +150,7 @@
               (try
                 (do
                   (setv sys.stdout (StringIO))
-                  (.write p (str (hy-eval i eval-module.--dict-- "__main__"))))
+                  (.write p (str (eval i eval-module.--dict-- "__main__"))))
                 (except [e Exception]
                   (setv sys.stdout oldout)
                   (def err (first (sys.exc-info)))
