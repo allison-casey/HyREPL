@@ -12,7 +12,7 @@
 (defmacro/g! defop [name args desc &rest body]
   (if-not (instance? (, str HySymbol) name)
     (macro-error name "Name must be a symbol or a string."))
-  (if-not (list? args)
+  (if-not (instance? HyList args)
     (macro-error args "Arguments must be a list."))
   (if-not (instance? HyDict desc)
           (macro-error desc "Description must be a dictionary."))

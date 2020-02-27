@@ -8,10 +8,11 @@
 
 
 (defclass Session [object]
-  [status ""
-   eval-id ""
-   repl None
-   last-traceback None]
+  (setv status "")
+  (setv eval-id "")
+  (setv repl None)
+  (setv last-traceback None)
+
   (defn --init-- [self]
     (setv self.uuid (str (uuid4)))
     (assoc sessions self.uuid self)
