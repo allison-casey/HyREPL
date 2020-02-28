@@ -12,10 +12,10 @@
 (require [hy.contrib.walk [let]])
 
 (defclass ReplServer [ThreadingMixIn TCPServer]
-  [allow-reuse-address True])
+  (setv allow-reuse-address True))
 
 (defclass ReplRequestHandler [BaseRequestHandler]
-  [session None]
+  (setv session None)
   (defn handle [self]
     (print "New client" :file sys.stderr)
     (let [buf (bytearray)
