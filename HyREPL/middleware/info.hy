@@ -9,14 +9,13 @@
 
 
 (defn resolve-symbol [sym]
-  (setv sym (.replace sym "-" "_"))
-  (when (.endswith sym "?")
-    (setv sym (+ "is-" (cut sym 0 -1))))
   (try
     (eval (HySymbol sym) (. eval-module --dict--))
     (except [e NameError]
-      None)))
-
+      (try
+        (get --macros-- (mangle sym))
+        (except [e KeyError]
+          None)))))
 
 (defn get-info [symbol]
   (let [s (resolve-symbol symbol)
