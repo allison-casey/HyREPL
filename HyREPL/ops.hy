@@ -112,9 +112,7 @@
        (import [HyREPL.session [sessions]]) ; Imported here to avoid circ. dependency
        (.write session
                {"status" ["done"]
-                "sessions" (list-comp
-                             (. s uuid)
-                             [s (.values sessions)])
+                "sessions" (lfor s (.values sessions) s.uuid)
                 "id" (.get msg "id")
                 "session" session.uuid}
                transport))
