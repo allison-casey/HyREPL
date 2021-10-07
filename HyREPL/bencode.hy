@@ -35,12 +35,11 @@
 
 (defn decode-list [thing]
   (let [rv [] i (,) t thing]
-    (while (> (len t) 0)
+    (while (and (> (len t) 0)
+                (not (.startswith t #b"e")))
       (setv i (decode t))
       (.append rv (first i))
-      (setv t (second i))
-      (when (.startswith t #b"e")
-        (break)))
+      (setv t (second i)))
     (when (= (len t) 0)
       (raise (ValueError "List without end marker")))
     (, rv (cut t 1))))
