@@ -1,4 +1,5 @@
 (import
+  [functools [partial]]
   sys
   threading
   time
@@ -16,6 +17,11 @@
 
 (defclass ReplRequestHandler [BaseRequestHandler]
   (setv session None)
+
+  (defn --init-- [self cooperative &rest args]
+    (setv self.cooperative cooperative)
+    (.--init-- (super) #*args))
+
   (defn handle [self]
     (print "New client" :file sys.stderr)
     (let [buf (bytearray)
@@ -42,17 +48,24 @@
                                                           "session")))
           (when (is self.session None)
             (setv self.session (session.Session))))
-        (.handle self.session (get m 0) self.request))
+        (.handle self.session (get m 0) self.request self.cooperative))
       (print "Client gone" :file sys.stderr))))
 
 
-(defn start-server [&optional [ip "127.0.0.1"] [port 1337]]
-  (let [s (ReplServer (, ip port) ReplRequestHandler)
+(defn start-server [&optional [ip "127.0.0.1"] [port 1337] [cooperative False]]
+  (let [s (ReplServer (, ip port) (partial ReplRequestHandler cooperative))
         t (threading.Thread :target s.serve-forever)]
     (setv t.daemon True)
     (.start t)
     (, t s)))
 
+(defn poll []
+  "Evaluate all expressions that have
+   been sent to the server since the
+   last time this function was called.
+
+   Only applies to a cooperative server"
+  (eval.process-delayed-evaluations))
 
 (defmain [&rest args]
   (setv port
