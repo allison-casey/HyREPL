@@ -31,6 +31,8 @@
       (.sendall transport (bencode.encode msg))
       (except [e OSError]
         (print (.format "Client gone: {}" e) :file sys.stderr))))
-  (defn handle [self msg transport]
+  (defn handle [self msg transport cooperative]
+    (when (= (.get msg "op") "eval")
+      (assoc msg "cooperative" cooperative))
     (print "in:" msg :file sys.stderr)
     ((find-op (.get msg "op")) self msg transport)))

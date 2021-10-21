@@ -1,4 +1,4 @@
-(import types sys threading [queue [Queue]] [io [StringIO]])
+(import types sys threading [queue [Queue Empty]] [io [StringIO]])
 (import ctypes)
 (import traceback)
 
@@ -40,6 +40,27 @@
          (raise (SystemError "PyThreadState-SetAsyncExc failed")))])))
 
 
+(setv eval-input-queue (Queue))
+(setv eval-result-queue (Queue))
+
+(defn eval-token [tok]
+  (try
+    (str (eval tok (if (instance? dict eval-module)
+                       eval-module
+                       (. eval-module --dict--))
+               "__main__"))
+    (except [e Exception]
+      (, 'exception e))))
+
+(defn process-delayed-evaluations []
+  "Process all queued evaluations for
+   a cooperative repl server"
+  (try
+    (while True
+      (eval-result-queue.put (eval-token (eval-input-queue.get-nowait))))
+    (except [e Empty]
+      'done)))
+
 (defclass InterruptibleEval [threading.Thread]
   ; """Repl simulation. This is a thread so hangs don't block everything."""
   (defn --init-- [self msg session writer]
@@ -74,10 +95,14 @@
               (try
                 (do
                   (setv sys.stdout (StringIO))
-                  (.write p (str (eval i (if (instance? dict eval-module)
-                                             eval-module
-                                             (. eval-module --dict--))
-                                          "__main__"))))
+                  (setv cooperative (get self.msg "cooperative"))
+                  (when cooperative
+                    (eval-input-queue.put i))
+                  (setv result (if cooperative (eval-result-queue.get)
+                                   (eval-token i)))
+                  (if (coll? result) ;; A collection means an exception occured during eval
+                      (raise (second result))
+                      (.write p result)))
                 (except [e Exception]
                   (setv sys.stdout oldout)
                   (.format-excp self (sys.exc-info)))
