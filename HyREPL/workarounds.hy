@@ -81,3 +81,7 @@
                 [session msg]
                 "(do (import traceback) (.print_last traceback))")
 
+(def-workaround "(seq (.split (System/getProperty \"java.class.path\") \":\"))"
+                [session msg]
+  "(do (import sys) sys.path)")
+
